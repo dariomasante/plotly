@@ -1,7 +1,3 @@
-
-var intervals = [];
-for (var i = 0; i < 50; ++i) intervals.push((6 / 50) * i - 3);
-
 function plotCumulBar (data,dest) {
          var i,k;
          var idDest,elDest;
@@ -124,6 +120,9 @@ function plotSPI (data,dest) {
          var idDest,elDest;
          var pltlyTraces = {};
          var pltlyLayout;
+		 /*for(var i = 0; i < data.spis.length; i++){ // Round to 2 decimal
+			data.spis[i] = data.spis[i].toFixed(2); 
+		 }*/
          switch (typeof(dest)) {
            case "string":
                 idDest = dest;
@@ -163,13 +162,11 @@ function plotSPI (data,dest) {
                                        //,opacity: 1
                                        ,type: 'bar'
                                        ,hoverinfo:'y'
-                                       /*,text: out_scale(data.spis)
-									                     ,textposition: 'auto'
-                                       ,textfont: {color: "white"
-									                                ,size: 12
-                                                  }*/
                               };
          pltlyLayout = {autosize: true
+		 				,margin: {r: 0
+						,t: 10
+						}
                        ,hovermode: 'closest'
                        ,hoverlabel: {bgcolor: 'white'
                                     ,font: {color: 'black'}
@@ -183,7 +180,7 @@ function plotSPI (data,dest) {
 							                 ,ticks: 'outside'
                                ,type: 'category'
                                }
-                       ,yaxis: {autorange: true//false
+                       ,yaxis: {autorange: true
                                ,range: [-3.6, 3.6]
 							                 ,dtick: 0.5
 							                 //,dtick: 1
@@ -191,19 +188,6 @@ function plotSPI (data,dest) {
                                ,title: 'SPI ' + idDest.slice(-2)
                                ,type: 'linear'
                                }
-/*					,annotations:[
-    {
-      x: data.months[10],
-      y: 3.4,
-      align: "center", 
-	  showarrow: false,
-      xref: 'x',
-      yref: 'y',
-      text: data.spis[10],
-      font: {color: 'white'},
-      align: 'center',
-    }
-  ]*/
                        };
          Plotly.plot(idDest
                      ,{data: [pltlyTraces['spi']]
@@ -216,6 +200,10 @@ function plotPrecipitation (data,dest) {
          var destElemId,elDest;
          var pltlyTraces = {};
          var pltlyLayout;
+		 for(var i = 0; i < data.avgs.length; i++){ // Round to 2 decimal
+			data.avgs[i] = data.avgs[i].toFixed(2); 
+			data.stds[i] = data.stds[i].toFixed(2); 
+		 }
          switch (typeof(dest)) {
            case "string":
                 destElemId = dest;
@@ -255,11 +243,11 @@ function plotPrecipitation (data,dest) {
                                                ,name: 'Monthly precipitation'
                                                ,opacity: 1
                                                ,type: 'bar'
-											                         ,hoverinfo:'y' 
+											   ,hoverinfo:'y' 
                                                };
          pltlyLayout = {autosize: true
 						,margin: {l: 50
-								 ,r: 0
+								 ,r: 20
 								 ,b: 0
 								 ,t: 0
 								}
@@ -299,6 +287,7 @@ function plotPrecipitation (data,dest) {
                     );
 }
 function grad (vals) {
+		 var intervals = []; for (var i = 0; i < 50; ++i) intervals.push((6 / 50) * i - 3);
          //var gradient = ['#7C0607','#801314','#841D1E','#882526','#8C2D2D','#903435','#943B3C','#984243','#9D494A','#A15151','#A55858','#A95F5F','#AE6667','#B26E6E','#B67676','#BB7E7E','#BF8686','#C48F8F','#C99898','#CDA2A2','#D2ACAC','#D8B7B7','#DDC3C3','#E3D0D0','#EBE2E2','#E3E3EA','#D3D4E2','#C7C7DB','#BCBCD6','#B2B3D1','#A9AACC','#A0A1C7','#9899C3','#9091BF','#888ABB','#8183B7','#7A7CB4','#7375B1','#6D6EAD','#6668AB','#6062A8','#595CA5','#5356A3','#4D50A1','#464A9F','#40449E','#393D9E','#32379E','#29309F','#1F28A2'];
 		     var gradient = ['#FF0000','#FF1400','#FF2900','#FF3E00','#FF5300','#FF6800','#FF7C00','#FF9100','#FFA600','#FFB200','#FFBD00','#FFC700','#FFD100','#FFDC00','#FFE600','#FFF100','#FFFB00','#FFFF14','#FFFF34','#FFFF53','#FFFF72','#FFFF91','#FFFFB0','#FFFFD0','#FFFFEF','#FDFBFE','#FAF5FD','#F8EFFD','#F5E9FC','#F2E2FB','#F0DCFA','#EDD6FA','#EAD0F9','#E4C5F4','#D8B3E8','#CBA0DB','#BF8DCF','#B27AC2','#A668B6','#9955A9','#8D429D','#803195','#702BA2','#6025AF','#501FBC','#4018CA','#3012D7','#200CE4','#1006F1','#0000FF'];
          var i,val,diff,newdiff;
@@ -327,7 +316,7 @@ function err_bar (avg,err) {
          }
          return (out)
 }
-function out_scale (val) {
+/*function out_scale (val) {
          var out = [];
          for (var i = 0; i < val.length; ++i) {
              v = '';
@@ -337,7 +326,7 @@ function out_scale (val) {
              out.push(v);
          }
          return(out)
-}
+}*/
 function make_trace (x, vals){ // Function to make the cumulative stacked bars
   var bars = [];
   for (var i = 0; i < x.length; ++i) {
