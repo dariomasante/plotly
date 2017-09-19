@@ -1,3 +1,4 @@
+
 function plotCumulBar (data,dest) {
          var i,k;
          var idDest,elDest;
@@ -200,9 +201,11 @@ function plotPrecipitation (data,dest) {
          var destElemId,elDest;
          var pltlyTraces = {};
          var pltlyLayout;
+		 var m0 = data.months[0] + '-15';
 		 for(var i = 0; i < data.avgs.length; i++){ // Round to 2 decimal
 			data.avgs[i] = data.avgs[i].toFixed(2); 
-			data.stds[i] = data.stds[i].toFixed(2); 
+			data.stds[i] = data.stds[i].toFixed(2);
+			data.months[i] = new Date(data.months[i] + '-15')
 		 }
          switch (typeof(dest)) {
            case "string":
@@ -234,7 +237,7 @@ function plotPrecipitation (data,dest) {
                                              ,shape: 'linear'
                                              ,width: 3
                                              }
-                                      ,name: 'Long-term average'
+                                      ,name: 'Long-term average (1981-2010)'
                                       ,type: 'scatter'
                                       ,hoverinfo:'y'
                                       };
@@ -251,7 +254,7 @@ function plotPrecipitation (data,dest) {
 								 ,b: 0
 								 ,t: 0
 								}
-                       ,hovermode: 'closest'
+                       //,hovermode: 'closest'
                        ,hoverlabel: {bgcolor: 'white'
                                     ,font: {color: 'black'}
                                     }
@@ -267,11 +270,13 @@ function plotPrecipitation (data,dest) {
                        ,xaxis: {autorange: true
                                //,nticks: data.months.length
                                //,nticks: 40
-                               //,tickformat: "%m-%Y"
+                               ,tickformat: "%m-%Y"
                                //,showline: false
                                //,tickmode: 'auto'
-							                 ,ticks: 'inside'
-							                 ,type: 'category'
+							   //,ticks: 'inside'
+							   ,type: 'date'
+							   ,dtick: 'M1'
+							   ,tick0: m0 //data.months[0].toISOString().slice(0, 10)
                                }
                        ,yaxis: {autorange: true
                                ,title: 'Precipitation (mm)'
