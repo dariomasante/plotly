@@ -1,3 +1,71 @@
+function ldiBar (data,dest) {
+		 var i,k;
+         var destElemId,elDest;
+         var pltlyTraces = {};
+         var pltlyLayout;
+         switch (typeof(dest)) {
+           case "string":
+                destElemId = dest;
+                elDest = document.getElementById(destElemId);
+                break;
+           default:
+                break;
+         }
+         try { // resetting..
+             elDest.innerHTML = "";
+             Plotly.purge(destElemId);
+             i = 0;
+             for (k in data) {
+                 Plotly.deleteTraces(destElemId, i);
+                 i++;
+             }
+         }   catch (e) {}
+         pltlyTraces['low'] = {x: data.months
+                                               ,y: data.low
+                                               ,name: 'Low'
+                                               ,opacity: 1
+                                               ,type: 'bar'
+                                               ,  marker: {
+													color: 'yellow'
+													}
+                                               };
+		 pltlyTraces['medium'] = {x: data.months
+                                               ,y: data.medium
+                                               ,name: 'Medium'
+                                               ,opacity: 1
+                                               ,type: 'bar'
+                                               ,  marker: {
+													color: 'orange'
+													}
+                                               };
+         pltlyTraces['high'] = {x: data.months
+                                               ,y: data.high
+                                               ,name: 'High'
+                                               ,opacity: 1
+                                               ,type: 'bar'       
+                                               ,  marker: {
+													color: 'red'
+													}
+                                               };
+         pltlyLayout = {autosize: true,
+                        barmode: 'stack',
+					                       showlegend: true
+                       ,xaxis: {autorange: true
+							   ,type: 'category'}
+                       ,yaxis: {autorange: true
+                               ,title: '% of the whole region'
+                               ,type: 'linear'
+                               }
+						,margin:{
+							t: 10
+						}
+                       };
+         Plotly.newPlot(destElemId
+                    ,{data: [pltlyTraces['low'],pltlyTraces['medium'],pltlyTraces['high']]
+                     ,layout: pltlyLayout
+                     }
+                    );
+}
 
 function plotCumulBar (data,dest) {
          var i,k;
@@ -201,11 +269,15 @@ function plotPrecipitation (data,dest) {
          var destElemId,elDest;
          var pltlyTraces = {};
          var pltlyLayout;
-		 var m0 = data.months[0] + '-15';
+		 var stdevSwitch = (data.months.length < 120) ? {symmetric: false
+                                                ,array: data.stds
+                                                ,arrayminus: err_bar(data.avgs,data.stds)
+                                                ,color: 'rgb(0, 0, 0)'
+												,width: 3
+                                                ,thickness: 1}:{};
 		 for(var i = 0; i < data.avgs.length; i++){ // Round to 2 decimal
 			data.avgs[i] = data.avgs[i].toFixed(2); 
-			data.stds[i] = data.stds[i].toFixed(2);
-			data.months[i] = new Date(data.months[i] + '-15')
+			data.stds[i] = data.stds[i].toFixed(2)
 		 }
          switch (typeof(dest)) {
            case "string":
@@ -227,11 +299,7 @@ function plotPrecipitation (data,dest) {
          }   catch (e) {}
          pltlyTraces['LongTermAvg'] = {x: data.months
                                       ,y: data.avgs
-                                      ,error_y: {symmetric: false
-                                                ,array: data.stds
-                                                ,arrayminus: err_bar(data.avgs,data.stds)
-                                                ,color: 'rgb(0, 0, 0)'
-                                                }
+                                      ,error_y: stdevSwitch
                                       ,line: {color: 'rgba(0, 0, 0, 0.5)'
                                              ,dash: 'solid'
                                              ,shape: 'linear'
@@ -268,15 +336,12 @@ function plotPrecipitation (data,dest) {
                        ,paper_bgcolor: '#fff'
                        ,showlegend: true
                        ,xaxis: {autorange: true
-                               //,nticks: data.months.length
-                               //,nticks: 40
-                               ,tickformat: "%m-%Y"
-                               //,showline: false
+                               //,tickformat: "%m-%Y"
                                //,tickmode: 'auto'
 							   //,ticks: 'inside'
-							   ,type: 'date'
-							   ,dtick: 'M1'
-							   ,tick0: m0 //data.months[0].toISOString().slice(0, 10)
+							   ,type: 'category'
+							   //,dtick: 'M1'
+							   //,tick0: m0 //data.months[0].toISOString().slice(0, 10)
                                }
                        ,yaxis: {autorange: true
                                ,title: 'Precipitation (mm)'
