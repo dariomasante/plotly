@@ -56,9 +56,7 @@ function ldiBar (data,dest) {
                                ,title: '% of the whole region'
                                ,type: 'linear'
                                }
-						,margin:{
-							t: 10
-						}
+                       ,margin: {t: 10}
                        };
          Plotly.newPlot(destElemId
                     ,{data: [pltlyTraces['low'],pltlyTraces['medium'],pltlyTraces['high']]
@@ -168,10 +166,12 @@ function plotCumulBar (data,dest) {
                                 ,y:-0.2
                                 ,x:0.5   
                               }
+					   ,margin: {t: 10}
                        ,showlegend: true
                        ,xaxis: {autorange: true
                                ,tickmode: 'auto'
-							                 ,showline: false
+							   ,showline: false
+							   ,type:'category'
                                }
                        ,yaxis: {autorange: true
                                ,title: 'Monthly cumulative (mm)'
@@ -233,9 +233,9 @@ function plotSPI (data,dest) {
                                        ,hoverinfo:'y'
                               };
          pltlyLayout = {autosize: true
-		 				,margin: {r: 0
-						,t: 10
-						}
+                       ,margin: {b: 50
+                                ,t: 10
+                                }
                        ,hovermode: 'closest'
                        ,hoverlabel: {bgcolor: 'white'
                                     ,font: {color: 'black'}
@@ -269,16 +269,16 @@ function plotPrecipitation (data,dest) {
          var destElemId,elDest;
          var pltlyTraces = {};
          var pltlyLayout;
+		 for(var i = 0; i < data.avgs.length; i++){ // Round to 2 decimal
+			data.avgs[i] = data.avgs[i].toFixed(2); 
+			data.stds[i] = data.stds[i].toFixed(2)
+		 }
 		 var stdevSwitch = (data.months.length < 120) ? {symmetric: false
                                                 ,array: data.stds
                                                 ,arrayminus: err_bar(data.avgs,data.stds)
                                                 ,color: 'rgb(0, 0, 0)'
 												,width: 3
                                                 ,thickness: 1}:{};
-		 for(var i = 0; i < data.avgs.length; i++){ // Round to 2 decimal
-			data.avgs[i] = data.avgs[i].toFixed(2); 
-			data.stds[i] = data.stds[i].toFixed(2)
-		 }
          switch (typeof(dest)) {
            case "string":
                 destElemId = dest;
@@ -317,11 +317,10 @@ function plotPrecipitation (data,dest) {
 											   ,hoverinfo:'y' 
                                                };
          pltlyLayout = {autosize: true
-						,margin: {l: 50
-								 ,r: 20
-								 ,b: 0
-								 ,t: 0
-								}
+                       ,margin: {r: 130 //NOTE exporting to png leaves wide right margin
+                                ,b: 0
+                                ,t: 10
+                                }
                        //,hovermode: 'closest'
                        ,hoverlabel: {bgcolor: 'white'
                                     ,font: {color: 'black'}
