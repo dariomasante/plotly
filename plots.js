@@ -98,7 +98,7 @@ function plotCumulBar (data,dest) {
 
 		for (var d = 0; d < data.months.length; d++) {
 		  var add = []; for (var dd = 0; dd <= d; dd++) {
-		  add.unshift('<i>' + full[parseFloat((data.months[dd]).split("-")[0]) - 1] + ': ' + data.qnts[dd] + ' mm<i\><br\>');
+		  add.unshift('<i>' + full[parseFloat((data.months[dd]).split("-")[1]) - 1] + ': ' + data.qnts[dd] + ' mm<i\><br\>');
 			  if(dd >= 6){ // Show only last 6 months on hover
 				add.splice(6, 1);
 				add[6] = '[...]';
