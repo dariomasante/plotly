@@ -1,4 +1,4 @@
-function ldiBar (data,dest) {
+function plotLdiBar (data,dest) {
 		 var i,k;
          var destElemId,elDest;
          var pltlyTraces = {};
@@ -20,7 +20,7 @@ function ldiBar (data,dest) {
                  i++;
              }
          }   catch (e) {}
-         pltlyTraces['low'] = {x: data.months
+         pltlyTraces['low'] = {x: data.refDate
                                                ,y: data.low
                                                ,name: 'Low'
                                                ,opacity: 1
@@ -29,7 +29,7 @@ function ldiBar (data,dest) {
 													color: 'yellow'
 													}
                                                };
-		 pltlyTraces['medium'] = {x: data.months
+		 pltlyTraces['medium'] = {x: data.refDate
                                                ,y: data.medium
                                                ,name: 'Medium'
                                                ,opacity: 1
@@ -38,7 +38,7 @@ function ldiBar (data,dest) {
 													color: 'orange'
 													}
                                                };
-         pltlyTraces['high'] = {x: data.months
+         pltlyTraces['high'] = {x: data.refDate
                                                ,y: data.high
                                                ,name: 'High'
                                                ,opacity: 1
@@ -50,13 +50,13 @@ function ldiBar (data,dest) {
          pltlyLayout = {autosize: true,
                         barmode: 'stack',
 					                       showlegend: true
-                       ,xaxis: {autorange: true
-							   ,type: 'category'}
+                       ,xaxis: {type: 'date'}
                        ,yaxis: {autorange: true
                                ,title: '% of the whole region'
                                ,type: 'linear'
                                }
-                       ,margin: {t: 10}
+                       ,margin: {t: 10
+                                }
                        };
          Plotly.newPlot(destElemId
                     ,{data: [pltlyTraces['low'],pltlyTraces['medium'],pltlyTraces['high']]
@@ -64,7 +64,6 @@ function ldiBar (data,dest) {
                      }
                     );
 }
-
 function plotCumulBar (data,dest) {
          var i,k;
          var idDest,elDest;
