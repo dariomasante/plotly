@@ -1,3 +1,12 @@
+// TODO: 
+/* 
+- Change plot SPI with coloured background and spi periods in parallel (or use lines)
+- Restore in SPI plots fixed y scale to -3 +3 and out of scale values
+-- Match spi colorbar perfectly -3 +3 (or add some text)
+- Add dates to SPI on hover, plus year/months depending on zoom
+
+*/
+
 function plotLdiBar (data,dest) {
 		 var i,k;
          var destElemId,elDest;
@@ -67,16 +76,19 @@ function plotLdiBar (data,dest) {
 function plotCumulBar (data,dest) {
          var i,k;
          var idDest,elDest;
-         var pltlyTraces = {};
+         var pltlyTraces = (data.months.length < 120)
+	                         ? make_trace(data.months, data.qnts)		
+	                         : []; // Make traces for stacked monthly boxes
          var pltlyLayout;
-		 var avg_cumul = []; data.avgs.reduce(function(a,b,i) { return avg_cumul[i] = a+b; },0); // Calculate cumulative long-term average
-		 var avg_text = []; for(var i = 0; i < avg_cumul.length; ++i) avg_text[i] = avg_cumul[i] + ' mm'; // Builds label for tooltip
-		 var c_std = cumulStd(data.stds); // cumulative st. deviations of long term averages
-		 var vals_cumul = []; data.qnts.reduce(function(a,b,i) { return vals_cumul[i] = a+b; },0); // Calculate cumulative monthly precipitation for period of interest
-		 var delta = [];  for (var n = 0; n < vals_cumul.length; ++n) delta.push(vals_cumul[n] - avg_cumul[n]); // Calculate cumulative differences from long-term average (cumulative deficit surplis)
-		 var cs = grad_zero(delta); // Bars colors
-		 var dtx = []; // The text box shown on hovering over the bars
-		 var full = ['January', 'February', 'March', 'April', 'May', 'June','July', 'August', 'September', 'October', 'November', 'December'];
+         var avg_cumul = []; data.avgs.reduce(function(a,b,i) { return avg_cumul[i] = a+b; },0); // Calculate cumulative long-term average
+         var avg_text = []; for(var i = 0; i < avg_cumul.length; ++i) avg_text[i] = Math.round(avg_cumul[i]*100)/100 + ' mm'; // Builds label for tooltip
+         var c_std = cumulStd(data.stds); // cumulative st. deviations of long term averages
+         var vals_cumul = []; data.qnts.reduce(function(a,b,i) { return vals_cumul[i] = a+b; },0); // Calculate cumulative monthly precipitation for period of interest
+         var delta = [];  for (var n = 0; n < vals_cumul.length; ++n) delta.push(vals_cumul[n] - avg_cumul[n]); // Calculate cumulative differences from long-term average (cumulative deficit surplis)
+         var cs = grad_zero(delta); // Bars colors
+         var dtx = []; // The text box shown on hovering over the bars
+         var full = ['January', 'February', 'March', 'April', 'May', 'June','July', 'August', 'September', 'October', 'November', 'December'];
+		 var stdVars = stdAreaLine (data.months, avg_cumul, c_std);
          switch (typeof(dest)) {
            case "string":
                 idDest = dest;
@@ -95,63 +107,62 @@ function plotCumulBar (data,dest) {
              }
          }   catch (e) {}
 
-		for (var d = 0; d < data.months.length; d++) {
-		  var add = []; for (var dd = 0; dd <= d; dd++) {
-		  add.unshift('<i>' + full[parseFloat((data.months[dd]).split("-")[1]) - 1] + ': ' + data.qnts[dd] + ' mm<i\><br\>');
+         for (var d = 0; d < data.months.length; d++) {
+         var add = []; for (var dd = 0; dd <= d; dd++) {
+         add.unshift('<i>' + full[parseFloat((data.months[dd]).split("-")[1]) - 1] + ': ' + data.qnts[dd] + ' mm<i\><br\>');
 			  if(dd >= 6){ // Show only last 6 months on hover
-				add.splice(6, 1);
-				add[6] = '[...]';
-			  }
-		  }
-		  var tx = (delta[d] < 0) ? "deficit ":"surplus ";
-		  add.unshift('<B>' + vals_cumul[d] + ' mm</B> - Total precipitation<br\>from ' + data.months[0] + ' to ' + data.months[d] + '<br\><br\>' + '<B>Cumulated ' + tx + delta[d] + ' mm</B><br\><br\>');
-		  dtx[d] = add.join('');
-		};
-		  var pltlyTraces = make_trace(data.months, data.qnts); // Make traces for stacked monthly boxes
-		pltlyTraces.unshift( { // Full color bars representing total cumulative precipitation, overlapping the stacked ones
-								  x: data.months, 
-								  y: vals_cumul, 
-								  name: '',  
-								  type: 'bar',
-								  text: dtx,
-								  hoverinfo:'text',
-								  base: data.months, // This allows bars overlap
-								  marker: {
-									showscale: true,
-									color: cs,
-									colorscale: cs_scale(delta),
-									cmax:Math.max(...delta),
-									cmin:Math.min(...delta),
-									colorbar  :{
-										tickvals   : [Math.min(...delta),Math.max(...delta)],
-										thickness: 12,
-										len: 0.7,
-										title: 'Cumulative<br\>deficit / surplus<br\>(mm)'
-									}
-								  },
-								  showlegend: false,
-								});
- 		 
-		 pltlyTraces.push( {  // Line of long term averages, plus error bar of cumulative st. dev.
-									  x: data.months, 
-									  y: avg_cumul,
- 									  error_y: {
-    									symmetric: false,
-    									array: c_std,
-									  	arrayminus: err_bar(avg_cumul,c_std),
-										color: 'black',
-  									  },   
-  									  line: {
-										color: 'rgba(0, 0, 0, 1)', 
-										dash: 'solid', 
-										shape: 'linear', 
-										width: 1.5
-									  }, 
-									  name: 'Cumulative long-term average', 
-									  type: 'scatter',
-									  text: avg_text,
-									  hoverinfo: 'text'
-									});
+                    add.splice(6, 1);
+                    add[6] = '[...]';
+                 }
+             }
+             var tx = (delta[d] < 0) ? "deficit ":"surplus ";
+             add.unshift('<B>' + vals_cumul[d].toFixed(2)
+                         + ' mm</B> - Total precipitation<br\>from '
+                         + data.months[0] + ' to ' + data.months[d]
+                         + '<br\><br\>' + '<B>Cumulated ' + tx + delta[d].toFixed(2)
+                         + ' mm</B><br\><br\>');
+             dtx[d] = add.join('');
+         };
+         pltlyTraces.unshift({ // Full color bars representing total cumulative precipitation, overlapping the stacked ones
+                              x: data.months, 
+                              y: vals_cumul, 
+                              name: '',  
+                              type: 'bar',
+                              text: dtx,
+                              hoverinfo:'text',
+                              base: data.months, // This allows bars overlap
+                              marker: {
+                                showscale: true,
+                                color: cs,
+                                colorscale: cs_scale(delta),
+                                cmax:Math.max(...delta),
+                                cmin:Math.min(...delta),
+                                colorbar  :{
+                                  tickvals   : [Math.min(...delta),Math.max(...delta)],
+                                  thickness: 12,
+                                  len: 0.7,
+                                  title: 'Cumulative<br\>deficit / surplus<br\>(mm)'
+                                }
+                              },
+                              showlegend: false,
+                             }
+                            );
+         pltlyTraces.push({  // Line of long term averages, plus error bar of cumulative st. dev.
+                          x: data.months, 
+                          y: avg_cumul,
+                          error_y: stdVars[0],
+                          line: {
+                            color: 'rgba(0, 0, 0, 0.5)', 
+                            dash: 'solid', 
+                            shape: 'linear', 
+                            width: 3
+                          }, 
+                          name: 'Cumulative long-term average (1981-2010)', 
+                          type: 'scatter',
+                          text: avg_text,
+                          hoverinfo: 'text'
+                          });
+		 pltlyTraces.push(stdVars[1]);
          pltlyLayout = {autosize: true
                        ,barmode: 'stack'
                        ,hoverlabel: {bgcolor: 'white'
@@ -165,12 +176,12 @@ function plotCumulBar (data,dest) {
                                 ,y:-0.2
                                 ,x:0.5   
                               }
-					   ,margin: {t: 10}
+					             ,margin: {t: 10}
                        ,showlegend: true
                        ,xaxis: {autorange: true
                                ,tickmode: 'auto'
-							   ,showline: false
-							   ,type:'category'
+							                 ,showline: false
+                               ,type:'category'
                                }
                        ,yaxis: {autorange: true
                                ,title: 'Monthly cumulative (mm)'
@@ -245,7 +256,7 @@ function plotSPI (data,dest) {
                                //,nticks: 40
                                //,tickformat: "%m-%Y"
                                //,tickmode: 'auto'
-							                 ,ticks: 'outside'
+							   ,ticks: 'outside'
                                ,type: 'category'
                                }
                        ,yaxis: {autorange: true
@@ -258,26 +269,17 @@ function plotSPI (data,dest) {
                                }
                        };
          Plotly.plot(idDest
-                     ,{data: [pltlyTraces['spi']]
-                     ,layout: pltlyLayout
-                     }
-                    );
+                       ,{data: [pltlyTraces['spi']]
+                        ,layout: pltlyLayout
+                        }
+                       );
 }
 function plotPrecipitation (data,dest) {
          var i,k;
          var destElemId,elDest;
          var pltlyTraces = {};
          var pltlyLayout;
-		 for(var i = 0; i < data.avgs.length; i++){ // Round to 2 decimal
-			data.avgs[i] = data.avgs[i].toFixed(2); 
-			data.stds[i] = data.stds[i].toFixed(2)
-		 }
-		 var stdevSwitch = (data.months.length < 120) ? {symmetric: false
-                                                ,array: data.stds
-                                                ,arrayminus: err_bar(data.avgs,data.stds)
-                                                ,color: 'rgb(0, 0, 0)'
-												,width: 3
-                                                ,thickness: 1}:{};
+		 var stdVars = stdAreaLine (data.months, data.avgs, data.stds);
          switch (typeof(dest)) {
            case "string":
                 destElemId = dest;
@@ -298,7 +300,7 @@ function plotPrecipitation (data,dest) {
          }   catch (e) {}
          pltlyTraces['LongTermAvg'] = {x: data.months
                                       ,y: data.avgs
-                                      ,error_y: stdevSwitch
+                                      ,error_y: stdVars[0]
                                       ,line: {color: 'rgba(0, 0, 0, 0.5)'
                                              ,dash: 'solid'
                                              ,shape: 'linear'
@@ -313,8 +315,9 @@ function plotPrecipitation (data,dest) {
                                                ,name: 'Monthly precipitation'
                                                ,opacity: 1
                                                ,type: 'bar'
-											   ,hoverinfo:'y' 
+											                         ,hoverinfo:'y' 
                                                };
+		 pltlyTraces['stdArea'] = stdVars[1];
          pltlyLayout = {autosize: true
                        ,margin: {r: 130 //NOTE exporting to png leaves wide right margin
                                 ,b: 0
@@ -336,10 +339,10 @@ function plotPrecipitation (data,dest) {
                        ,xaxis: {autorange: true
                                //,tickformat: "%m-%Y"
                                //,tickmode: 'auto'
-							   //,ticks: 'inside'
-							   ,type: 'category'
-							   //,dtick: 'M1'
-							   //,tick0: m0 //data.months[0].toISOString().slice(0, 10)
+							                 //,ticks: 'inside'
+							                 ,type: 'category'
+                               //,dtick: 'M1'
+                               //,tick0: m0 //data.months[0].toISOString().slice(0, 10)
                                }
                        ,yaxis: {autorange: true
                                ,title: 'Precipitation (mm)'
@@ -349,13 +352,14 @@ function plotPrecipitation (data,dest) {
          Plotly.newPlot(destElemId
                     ,{data: [pltlyTraces['MonthlyPrecipitation']
                             ,pltlyTraces['LongTermAvg']
+							,pltlyTraces['stdArea']
                             ]
                      ,layout: pltlyLayout
                      }
                     );
 }
 function grad (vals) {
-		 var intervals = []; for (var i = 0; i < 50; ++i) intervals.push((6 / 50) * i - 3);
+		     var intervals = []; for (var i = 0; i < 50; ++i) intervals.push((6 / 50) * i - 3);
          //var gradient = ['#7C0607','#801314','#841D1E','#882526','#8C2D2D','#903435','#943B3C','#984243','#9D494A','#A15151','#A55858','#A95F5F','#AE6667','#B26E6E','#B67676','#BB7E7E','#BF8686','#C48F8F','#C99898','#CDA2A2','#D2ACAC','#D8B7B7','#DDC3C3','#E3D0D0','#EBE2E2','#E3E3EA','#D3D4E2','#C7C7DB','#BCBCD6','#B2B3D1','#A9AACC','#A0A1C7','#9899C3','#9091BF','#888ABB','#8183B7','#7A7CB4','#7375B1','#6D6EAD','#6668AB','#6062A8','#595CA5','#5356A3','#4D50A1','#464A9F','#40449E','#393D9E','#32379E','#29309F','#1F28A2'];
 		     var gradient = ['#FF0000','#FF1400','#FF2900','#FF3E00','#FF5300','#FF6800','#FF7C00','#FF9100','#FFA600','#FFB200','#FFBD00','#FFC700','#FFD100','#FFDC00','#FFE600','#FFF100','#FFFB00','#FFFF14','#FFFF34','#FFFF53','#FFFF72','#FFFF91','#FFFFB0','#FFFFD0','#FFFFEF','#FDFBFE','#FAF5FD','#F8EFFD','#F5E9FC','#F2E2FB','#F0DCFA','#EDD6FA','#EAD0F9','#E4C5F4','#D8B3E8','#CBA0DB','#BF8DCF','#B27AC2','#A668B6','#9955A9','#8D429D','#803195','#702BA2','#6025AF','#501FBC','#4018CA','#3012D7','#200CE4','#1006F1','#0000FF'];
          var i,val,diff,newdiff;
@@ -384,7 +388,8 @@ function err_bar (avg,err) {
          }
          return (out)
 }
-/*function out_scale (val) {
+/*
+function out_scale (val) {
          var out = [];
          for (var i = 0; i < val.length; ++i) {
              v = '';
@@ -394,29 +399,30 @@ function err_bar (avg,err) {
              out.push(v);
          }
          return(out)
-}*/
+}
+*/
 function make_trace (x, vals){ // Function to make the cumulative stacked bars
-  var bars = [];
-  for (var i = 0; i < x.length; ++i) {
-    var y_vals = Array(x.length).fill('NaN');
-    for (var ii = i; ii < x.length; ++ii) { y_vals[ii] = vals[i] }
-    var b = {
-		  x:x,
-		  y:y_vals,  
-		  type: 'bar',
-		  marker: {
-			color: 'rgba(255,255,255,0)',
-			line: {
-			  color: 'black',
-			  width: 1
-			}
-		  },
-		  hoverinfo: 'none',
-		  showlegend: false
-    }
-    bars.push(b);
-  }
-  return bars
+         var bars = [];
+         for (var i = 0; i < x.length; ++i) {
+            var y_vals = Array(x.length).fill('NaN');
+            for (var ii = i; ii < x.length; ++ii) { y_vals[ii] = vals[i] }
+            var b = {
+              x:x,
+              y:y_vals,  
+              type: 'bar',
+              marker: {
+                color: 'rgba(255,255,255,0)',
+                line: {
+                  color: 'black',
+                  width: 1
+                }
+              },
+              hoverinfo: 'none',
+              showlegend: false
+            }
+            bars.push(b);
+         }
+         return bars;
 };
 function grad_zero (vs) { // Function to associate colorscale colors to deficit/surplus values
   var vs_lt = vs.filter(function(v){return v < 0});
@@ -466,3 +472,31 @@ function cs_scale (x) { // Function to calibrate the colorbar based on the defic
   }
   return out
 }
+function stdAreaLine (months, avg, std){
+  var stdMinus = err_bar(avg,std);
+  if(months.length < 120){
+    		 var stdevSwitch = {symmetric: false
+                           ,array: std
+                           ,arrayminus: stdMinus 
+                           ,color: 'rgb(0, 0, 0)'
+                           ,width: 3
+                           ,thickness: 1
+                        };
+			var stdArea = [];
+		 } else {
+			var stdevSwitch = {};
+			var dplus = avg.map(function (num, idx) {return num + std[idx]});
+			var dminus = avg.map(function (num, idx) {return num - stdMinus[idx]}).reverse();
+			var stdArea = {
+				x: months.concat(months.slice(0).reverse()) 
+				,y: dplus.concat(dminus)
+				,type: 'scatter'
+				,fill: "tozerox"
+				,fillcolor: "rgba(0,0,0,0.2)" 
+				,line: {color: "transparent"}
+				,showlegend: false
+			    ,hoverinfo: 'none'
+				};
+		 };
+  return [stdevSwitch, stdArea];
+};
