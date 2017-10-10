@@ -4,6 +4,7 @@
 - Restore in SPI plots fixed y scale to -3 +3 and out of scale values
 -- Match spi colorbar perfectly -3 +3 (or add some text)
 - Add dates to SPI on hover, plus year/months depending on zoom
+- CumulBar: add intermediate ticks to colorbar
 
 */
 
@@ -381,14 +382,14 @@ function plotPrecipitation (data,dest) { // Function to generate precipitation b
                     );
 }
 function grad (vals) { // Function to assign color to columns in barplots
-		     var intervals = []; for (var i = 0; i < 50; ++i) intervals.push((6 / 50) * i - 3);
+		     var intervals = []; for (var i = 0; i < 50; ++i) intervals.push((6 / 50) * i - 3); // Range of SPI colors hardcoded between 3 and -3
          //var gradient = ['#7C0607','#801314','#841D1E','#882526','#8C2D2D','#903435','#943B3C','#984243','#9D494A','#A15151','#A55858','#A95F5F','#AE6667','#B26E6E','#B67676','#BB7E7E','#BF8686','#C48F8F','#C99898','#CDA2A2','#D2ACAC','#D8B7B7','#DDC3C3','#E3D0D0','#EBE2E2','#E3E3EA','#D3D4E2','#C7C7DB','#BCBCD6','#B2B3D1','#A9AACC','#A0A1C7','#9899C3','#9091BF','#888ABB','#8183B7','#7A7CB4','#7375B1','#6D6EAD','#6668AB','#6062A8','#595CA5','#5356A3','#4D50A1','#464A9F','#40449E','#393D9E','#32379E','#29309F','#1F28A2'];
 		     var gradient = ['#FF0000','#FF1400','#FF2900','#FF3E00','#FF5300','#FF6800','#FF7C00','#FF9100','#FFA600','#FFB200','#FFBD00','#FFC700','#FFD100','#FFDC00','#FFE600','#FFF100','#FFFB00','#FFFF14','#FFFF34','#FFFF53','#FFFF72','#FFFF91','#FFFFB0','#FFFFD0','#FFFFEF','#FDFBFE','#FAF5FD','#F8EFFD','#F5E9FC','#F2E2FB','#F0DCFA','#EDD6FA','#EAD0F9','#E4C5F4','#D8B3E8','#CBA0DB','#BF8DCF','#B27AC2','#A668B6','#9955A9','#8D429D','#803195','#702BA2','#6025AF','#501FBC','#4018CA','#3012D7','#200CE4','#1006F1','#0000FF'];
          var i,val,diff,newdiff;
 			   var colors = [];
          for (i = 0; i < vals.length; ++i) {
              var diff = 10000; // Just to generate the variable
-             for (val = 0; val < intervals.length; val++) {
+             for (val = 0; val < intervals.length; val++) { // Assign color (weird but more efficient way for interval matching)
                  newdiff = Math.abs (vals[i] - intervals[val]);
                  if (newdiff < diff) {
                     diff = newdiff;
@@ -447,29 +448,30 @@ function make_trace (x, vals){ // Function to make the cumulative stacked bars
          return bars;
 };
 function grad_zero (vs) { // Function to associate colorscale colors to deficit/surplus values
-  var vs_lt = vs.filter(function(v){return v < 0});
-  vs_lt[vs_lt.indexOf(Math.max(...vs_lt))] = 0;
-  var vs_gt = vs.filter(function(v){return v >= 0});
-  vs_gt[vs_gt.indexOf(Math.min(...vs_gt))] = 0;
+  // Colorscale for deficit values
   var gradient_lt = ['#7C0607','#801314','#841D1E','#882526','#8C2D2D','#903435','#943B3C','#984243','#9D494A','#A15151','#A55858','#A95F5F','#AE6667','#B26E6E','#B67676','#BB7E7E','#BF8686','#C48F8F','#C99898','#CDA2A2','#D2ACAC','#D8B7B7','#DDC3C3','#E3D0D0','#EBE2E2','#FFFFFF'];
+  // Colorscale for surplus values
   var gradient_gt = ['#FFFFFF','#E3E3EA','#D3D4E2','#C7C7DB','#BCBCD6','#B2B3D1','#A9AACC','#A0A1C7','#9899C3','#9091BF','#888ABB','#8183B7','#7A7CB4','#7375B1','#6D6EAD','#6668AB','#6062A8','#595CA5','#5356A3','#4D50A1','#464A9F','#40449E','#393D9E','#32379E','#29309F','#1F28A2'];
-  var gradient = [...gradient_lt,  ...gradient_gt]; // Concatenate values
-  var intervals_lt = [Math.min(...vs_lt)]; for (var i = 0; i < (gradient_lt.length-1); ++i) intervals_lt.push(((Math.max(...vs_lt) - Math.min(...vs_lt)) / (gradient_lt.length-1) * (i+1) + Math.min(...vs_lt)));
-  var intervals_gt = [Math.min(...vs_gt)]; for (var i = 0; i < (gradient_gt.length-1); ++i) intervals_gt.push(((Math.max(...vs_gt) - Math.min(...vs_gt)) / (gradient_gt.length-1) * (i+1) + Math.min(...vs_gt)));
+  var gradient = [...gradient_lt,  ...gradient_gt];
+  var maxDark = Math.abs(Math.min(...vs)) > Math.abs(Math.max(...vs)) ? Math.min(...vs) : -Math.max(...vs); // Get maximum deficit/surplus to calibrate color 
+  var int_lt = Math.abs(maxDark) / (gradient_lt.length-1); // Calc. interval size for values below zero
+  var intervals_lt = [maxDark]; for (var i = 0; i < (gradient_lt.length-1); ++i) intervals_lt.push(( int_lt * (i+1) + maxDark)); // Make interval sequence
+  var int_gt = Math.abs(maxDark) / (gradient_gt.length-1); // Calc. interval size for values above equal zero
+  var intervals_gt = [0]; for (var i = 0; i < (gradient_gt.length-1); ++i) intervals_gt.push(int_gt * (i+1)); // Make interval sequence
   var intervals = [...intervals_lt, ...intervals_gt];
   var colors = [];
   for (var ii = 0; ii < vs.length; ++ii) {
     var diff = 100000;
     for (var val = 0; val < intervals.length; val++) {
-      var newdiff = Math.abs (vs[ii] - intervals[val]);
+      var newdiff = Math.abs (vs[ii] - intervals[val]); 
       if (newdiff < diff) {
           diff = newdiff;
-		  sel_col = gradient[val];
+		      sel_col = gradient[val];
       }
     }
 	colors.push(sel_col);
   }
-  return colors
+  return colors;
 }
 function cumulStd (st_devs) { // Function to calculate the cumulative st. dev. (i.e. sqrt of cumulative monthly variances)
   var variance = [];
