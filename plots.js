@@ -1,11 +1,11 @@
 // TODO: 
 /* 
-- Change plot SPI with coloured background and spi periods in parallel (or use lines)
+- ADD titles and good explanation/legend
+- ? Change plot SPI with coloured background and spi periods in parallel (or use lines)
 - Restore in SPI plots fixed y scale to -3 +3 and out of scale values
 -- Match spi colorbar perfectly -3 +3 (or add some text)
-- Add dates to SPI on hover, plus year/months depending on zoom
-- CumulBar: add intermediate ticks to colorbar
-
+- Precipitation: adjust "negative" st. dev.: dashed or quartiles
+- Create annotations on click for SPI and precip. (https://plot.ly/javascript/click-events/)
 */
 
 function plotLdiBar (data,dest) { // Function to generate LDI bar plot
@@ -72,7 +72,8 @@ function plotLdiBar (data,dest) { // Function to generate LDI bar plot
 function plotCumulBar (data,dest) {  // Function to generate cumulative precip. barplot
          var i,k;
          var idDest,elDest;
-         var pltlyTraces = (data.months.length < 60)
+		 var n = 36; // Max number of months for the full stack and std.dev. bars are shown
+         var pltlyTraces = (data.months.length < n)
 	                         ? make_trace(data.months, data.qnts)		
 	                         : []; // Make traces for stacked monthly boxes
          var pltlyLayout;
@@ -81,10 +82,13 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
          var c_std = cumulStd(data.stds); // cumulative st. deviations of long term averages
          var vals_cumul = []; data.qnts.reduce(function(a,b,i) { return vals_cumul[i] = a+b; },0); // Calculate cumulative monthly precipitation for period of interest
          var delta = [];  for (var n = 0; n < vals_cumul.length; ++n) delta.push(vals_cumul[n] - avg_cumul[n]); // Calculate cumulative differences from long-term average (cumulative deficit surplis)
+		 M = Math.max(...delta); // This is used several times, so create in the root
+		 m = Math.min(...delta); // This is used several times, so create in the root
+	     var ticksColorbar = [m, m / 2, 0, M / 2, M];
          var cs = grad_zero(delta); // Bars colors
          var dtx = []; // The text box shown on hovering over the bars
          var full = ['January', 'February', 'March', 'April', 'May', 'June','July', 'August', 'September', 'October', 'November', 'December'];
-		     var stdVars = stdAreaLine (data.months, avg_cumul, c_std);
+		     var stdVars = stdAreaLine (data.months, avg_cumul, c_std, n);
          switch (typeof(dest)) {
            case "string":
                 idDest = dest;
@@ -135,11 +139,12 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
                               marker: {
                                 showscale: true,
                                 color: cs,
-                                colorscale: cs_scale(delta),
-                                cmax:Math.max(...delta),
-                                cmin:Math.min(...delta),
+                                colorscale: cs_scale(), // Watch out, uses m and M generated in the root
+                                cmax: M,
+                                cmin: m,
                                 colorbar  :{
-                                  tickvals   : [Math.min(...delta),Math.max(...delta)],
+                                  tickvals   : ticksColorbar,
+								  ticklen: 2
                                   thickness: 12,
                                   len: 0.7,
                                   title: 'Cumulative<br\>deficit / surplus<br\>(mm)'
@@ -161,17 +166,18 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
 							            //         ,thickness: 1}
                           //       : {}
                           //,
-                          error_y: stdVars[0],
-                          line: {
+                          error_y: stdVars[0]
+                          ,line: {
                             color: 'rgba(0, 0, 0, 0.5)', 
                             dash: 'solid', 
                             shape: 'linear', 
                             width: 3
-                          }, 
-                          name: 'Cumulative long-term average (1981-2010)', 
-                          type: 'scatter',
-                          text: avg_text,
-                          hoverinfo: 'text'
+                          } 
+                          ,name: 'Cumulative long-term average (1981-2010)'
+                          ,type: 'scatter'
+                          ,text: avg_text
+                          ,hoverinfo: 'text'
+						  ,legendgroup: 'longTermStats'
                           });
 		     pltlyTraces.push(stdVars[1]);
          pltlyLayout = {autosize: true
@@ -246,13 +252,15 @@ function plotSPI (data,dest) { // Function to generate SPI barplots
                                        ,colorbar: {//title      : "SPI"
                                                   ticktext   : ["Extremely dry","Very dry","Dry","Normal","Wet","Very wet","Extremely wet"]
                                                   ,tickvals   : [-3,-2,-1,0,1,2,3]
+												  ,ticklen: 2
                                                   ,thickness: 12
                                                   ,len: 0.9
                                                   }
                                        }
                                        //,opacity: 1
                                        ,type: 'bar'
-                                       ,hoverinfo:'y'
+									   ,text: data.months
+									   ,hoverinfo: 'y+text'
                               };
          pltlyLayout = {autosize: true
                        ,margin: {b: 70
@@ -291,7 +299,7 @@ function plotPrecipitation (data,dest) { // Function to generate precipitation b
          var destElemId,elDest;
          var pltlyTraces = {};
          var pltlyLayout;
-		     var stdVars = stdAreaLine (data.months, data.avgs, data.stds);
+		     var stdVars = stdAreaLine (data.months, data.avgs, data.stds, 60);
          /*
          var stdevSwitch = (data.months.length < 120)
                          ? {symmetric: false
@@ -329,16 +337,17 @@ function plotPrecipitation (data,dest) { // Function to generate precipitation b
                                              ,shape: 'linear'
                                              ,width: 3
                                              }
-                                      ,name: 'Long-term average (1981-2010)'
+                                      ,name: 'Long-term average (1981-2010), with st. dev.'
                                       ,type: 'scatter'
                                       ,hoverinfo:'y'
+									  ,legendgroup: 'longTermStats'
                                       };
          pltlyTraces['MonthlyPrecipitation'] = {x: data.months
                                                ,y: data.qnts
                                                ,name: 'Monthly precipitation'
                                                ,opacity: 1
                                                ,type: 'bar'
-											                         ,hoverinfo:'y' 
+											   ,hoverinfo:'y' 
                                                };
 		     pltlyTraces['stdArea'] = stdVars[1];
          pltlyLayout = {autosize: true
@@ -447,13 +456,13 @@ function make_trace (x, vals){ // Function to make the cumulative stacked bars
          }
          return bars;
 };
-function grad_zero (vs) { // Function to associate colorscale colors to deficit/surplus values
+function grad_zero (vs) { // Function to associate colorscale colors to deficit/surplus values.  Watch out, uses m and M generated in the root
   // Colorscale for deficit values
   var gradient_lt = ['#7C0607','#801314','#841D1E','#882526','#8C2D2D','#903435','#943B3C','#984243','#9D494A','#A15151','#A55858','#A95F5F','#AE6667','#B26E6E','#B67676','#BB7E7E','#BF8686','#C48F8F','#C99898','#CDA2A2','#D2ACAC','#D8B7B7','#DDC3C3','#E3D0D0','#EBE2E2','#FFFFFF'];
   // Colorscale for surplus values
   var gradient_gt = ['#FFFFFF','#E3E3EA','#D3D4E2','#C7C7DB','#BCBCD6','#B2B3D1','#A9AACC','#A0A1C7','#9899C3','#9091BF','#888ABB','#8183B7','#7A7CB4','#7375B1','#6D6EAD','#6668AB','#6062A8','#595CA5','#5356A3','#4D50A1','#464A9F','#40449E','#393D9E','#32379E','#29309F','#1F28A2'];
   var gradient = [...gradient_lt,  ...gradient_gt];
-  var maxDark = Math.abs(Math.min(...vs)) > Math.abs(Math.max(...vs)) ? Math.min(...vs) : -Math.max(...vs); // Get maximum deficit/surplus to calibrate color 
+  var maxDark = Math.abs(m) > Math.abs(M) ? m : -M; // Get maximum deficit/surplus to calibrate color 
   var int_lt = Math.abs(maxDark) / (gradient_lt.length-1); // Calc. interval size for values below zero
   var intervals_lt = [maxDark]; for (var i = 0; i < (gradient_lt.length-1); ++i) intervals_lt.push(( int_lt * (i+1) + maxDark)); // Make interval sequence
   var int_gt = Math.abs(maxDark) / (gradient_gt.length-1); // Calc. interval size for values above equal zero
@@ -485,10 +494,10 @@ function cumulStd (st_devs) { // Function to calculate the cumulative st. dev. (
   }
   return cumul_std
 }
-function cs_scale (x) { // Function to calibrate the colorbar based on the deficit/surplus values (50 colors)
+function cs_scale () { // Function to calibrate the colorbar based on the deficit/surplus values (50 colors). Watch out, uses m and M generated in the root
   var range = [0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.32,0.34,0.36,0.38,0.4,0.42,0.44,0.46,0.48,0.5,0.52,0.54,0.56,0.58,0.6,0.62,0.64,0.66,0.68,0.7,0.72,0.74,0.76,0.78,0.8,0.82,0.84,0.86,0.88,0.9,0.92,0.94,0.96,0.98,1]; 
-  var diff = Math.abs(Math.max(...x) - Math.min(...x));
-  var dx = [];  for (var i = 0; i < range.length; ++i) dx.push(range[i] * diff + Math.min(...x));
+  var diff = Math.abs(M - m);  
+  var dx = [];  for (var i = 0; i < range.length; ++i) dx.push(range[i] * diff + m);
   var cs_hex = grad_zero(dx);
   var out = [];  for (var ii = 0; ii < cs_hex.length; ++ii) {
     var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(cs_hex[ii]);
@@ -496,9 +505,9 @@ function cs_scale (x) { // Function to calibrate the colorbar based on the defic
   }
   return out
 }
-function stdAreaLine (months, avg, std){ // Function to generate cumulative barplots for more than 60 months
+function stdAreaLine (months, avg, std, n){ // Function to generate cumulative barplots for less than n months
   var stdMinus = err_bar(avg,std);
-  if(months.length < 60){
+  if(months.length < n){
     		 var stdevSwitch = {symmetric: false
                            ,array: std
                            ,arrayminus: stdMinus 
@@ -520,6 +529,7 @@ function stdAreaLine (months, avg, std){ // Function to generate cumulative barp
 				,line: {color: "transparent"}
 				,showlegend: false
 			    ,hoverinfo: 'none'
+				,legendgroup: 'longTermStats'
 				};
 		 };
   return [stdevSwitch, stdArea];
