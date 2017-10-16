@@ -414,9 +414,10 @@ function err_bar (avg,err) { // Function to trunc st.dev. to zero and avoid nega
          for (var i = 0; i < avg.length; ++i) {
              var d = avg[i] - err[i];
              if (d < 0) {
-                err[i] = avg[i];
-             }
+                out.push(avg[i]);
+             } else {
              out.push(err[i]);
+	     }
          }
          return (out)
 }
