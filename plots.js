@@ -77,7 +77,7 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
 	                         : []; // Make traces for stacked monthly boxes
          var pltlyLayout;
          var avg_cumul = []; data.avgs.reduce(function(a,b,i) { return avg_cumul[i] = a+b; },0); // Calculate cumulative long-term average
-         var avg_text = []; for(var i = 0; i < avg_cumul.length; ++i) avg_text[i] = Math.round(avg_cumul[i]*100)/100 + ' mm'; // Builds label for tooltip
+		 var avg_text = avg_cumul.map(function (num) {return num.toFixed(0) + ' mm'}); // Builds label for tooltip
          var c_std = cumulStd(data.stds); // cumulative st. deviations of long term averages
          var vals_cumul = []; data.qnts.reduce(function(a,b,i) { return vals_cumul[i] = a+b; },0); // Calculate cumulative monthly precipitation for period of interest
          var delta = [];  for (var n = 0; n < vals_cumul.length; ++n) delta.push(vals_cumul[n] - avg_cumul[n]); // Calculate cumulative differences from long-term average (cumulative deficit surplis)
@@ -118,17 +118,13 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
                  }
              }
              var tx = (delta[d] < 0) ? "deficit ":"surplus ";
-             add.unshift('<B>' + vals_cumul[d].toFixed(2)
+             add.unshift('<B>' + vals_cumul[d].toFixed(0)
                          + ' mm</B> - Total precipitation<br\>from '
                          + data.months[0] + ' to ' + data.months[d]
-                         + '<br\><br\>' + '<B>Cumulated ' + tx + delta[d].toFixed(2)
+                         + '<br\><br\>' + '<B>Cumulated ' + tx + delta[d].toFixed(0)
                          + ' mm</B><br\><br\>');
              dtx[d] = add.join('');
          }
-		     //var pltlyTraces = make_trace(data.months, data.qnts); // Make traces for stacked monthly boxes
-		     //var pltlyTraces = (data.months.length < 120)
-         //                ? make_trace(data.months, data.qnts)
-         //                : []; // Make traces for stacked monthly boxes
          pltlyTraces.unshift({ // Full color bars representing total cumulative precipitation, overlapping the stacked ones
                               x: data.months, 
                               y: vals_cumul, 
@@ -144,7 +140,7 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
                                 cmax: M,
                                 cmin: m,
                                 colorbar  : {
-                                  tickvals   : ticksColorbar,
+                                  tickvals   : ticksColorbar.map(function (num) {return Math.round(num)}), // Round to integer mm
 								  ticklen: 2,
                                   thickness: 12,
                                   len: heightColorbar,
@@ -157,16 +153,6 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
          pltlyTraces.push({  // Line of long term averages, plus error bar of cumulative st. dev.
                           x: data.months, 
                           y: avg_cumul,
-                          //error_y: stdevSwitch,
-                          //error_y: (data.months.length < 120)
-                          //       ? {symmetric: false
-                          //         ,array: data.stds
-                          //         ,arrayminus: err_bar(data.avgs,data.stds)
-                          //         ,color: 'rgb(0, 0, 0)'
-                          //         ,width: 3
-							            //         ,thickness: 1}
-                          //       : {}
-                          //,
                           error_y: stdVars[0]
                           ,line: {
                             color: 'rgba(0, 0, 0, 0.5)', 
