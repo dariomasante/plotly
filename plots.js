@@ -85,7 +85,7 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
          m = Math.min(...delta); // This is used several times, so create in the root
 		 var heightColorbar = 0.7;
 		 var tickLimit = heightColorbar / 3;
-         var ticksColorbar = [m, (Math.abs(m*(heightColorbar / (M + m))) > tickLimit) ? m / 2 : '', 0, (Math.abs(M*(heightColorbar / (M + m))) > tickLimit) ? M / 2 : '', M];
+         var ticksColorbar = [m, (Math.abs(m*(heightColorbar / (M + m))) > tickLimit) ? m / 2 : '', 0, (Math.abs(M*(heightColorbar / (M + m))) > tickLimit) ? M / 2 : '', M]
          var cs = grad_zero(delta); // Bars colors
          var dtx = []; // The text box shown on hovering over the bars
          var full = ['January', 'February', 'March', 'April', 'May', 'June','July', 'August', 'September', 'October', 'November', 'December'];
@@ -140,7 +140,8 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
                                 cmax: M,
                                 cmin: m,
                                 colorbar  : {
-                                  tickvals   : ticksColorbar.map(function (num) {return Math.round(num)}), // Round to integer mm
+                                  tickvals   : ticksColorbar,
+								  ticktext : ticksColorbar.map(function (num) {return Math.round(num)}), // Round to integer mm
 								  ticklen: 2,
                                   thickness: 12,
                                   len: heightColorbar,
@@ -158,15 +159,15 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
                             color: 'rgba(0, 0, 0, 0.5)', 
                             dash: 'solid', 
                             shape: 'linear', 
-                            width: 3
+                            width: 2
                           } 
-                          ,name: 'Cumulative long-term average (1981-2010)'
+                          ,name: 'Cumulative long-term average (1981-2010), with cumulative st. dev.'
                           ,type: 'scatter'
                           ,text: avg_text
                           ,hoverinfo: 'text'
 						              ,legendgroup: 'longTermStats'
                           });
-		     pltlyTraces.push(stdVars[1]);
+		     pltlyTraces.push(...stdVars[1]);
          pltlyLayout = {autosize: true
                        ,barmode: 'stack'
                        ,hoverlabel: {bgcolor: 'white'
@@ -284,7 +285,7 @@ function plotSPI (data,dest) { // Function to generate SPI barplots
 function plotPrecipitation (data,dest) { // Function to generate precipitation barplot
          var i,k;
          var destElemId,elDest;
-         var pltlyTraces = {};
+         var pltlyTraces = [];
          var pltlyLayout;
 		 var nMaxMonths = 36; // Max number of months for std.dev. to be shown as bars, not shade
 		 var stdVars = stdAreaLine (data.months, data.avgs, data.stds, nMaxMonths);
@@ -306,30 +307,30 @@ function plotPrecipitation (data,dest) { // Function to generate precipitation b
                  i++;
              }
          }   catch (e) {}
-         pltlyTraces['LongTermAvg'] = {x: data.months
+         pltlyTraces.push({x: data.months
+                                               ,y: data.qnts
+                                               ,name: 'Monthly precipitation'
+                                               ,opacity: 1
+                                               ,type: 'bar'
+											                         ,hoverinfo:'y' 
+                                               });
+         pltlyTraces.push({x: data.months
                                       ,y: data.avgs
                                       ,error_y: stdVars[0]
                                       //,error_y: stdevSwitch
                                       ,line: {color: 'rgba(0, 0, 0, 0.5)'
                                              ,dash: 'solid'
                                              ,shape: 'linear'
-                                             ,width: 3
+                                             ,width: 2
                                              }
                                       ,name: 'Long-term average (1981-2010), with st. dev.'
                                       ,type: 'scatter'
                                       ,hoverinfo:'y'
 									                    ,legendgroup: 'longTermStats'
-                                      };
-         pltlyTraces['MonthlyPrecipitation'] = {x: data.months
-                                               ,y: data.qnts
-                                               ,name: 'Monthly precipitation'
-                                               ,opacity: 1
-                                               ,type: 'bar'
-											                         ,hoverinfo:'y' 
-                                               };
-		     pltlyTraces['stdArea'] = stdVars[1];
+                                      });
+		     pltlyTraces.push(...stdVars[1]);
          pltlyLayout = {autosize: true
-                       ,margin: {r: 130 //NOTE exporting to png leaves wide right margin
+                       ,margin: {r: 150 //NOTE exporting to png leaves wide right margin
                                 ,b: 70
                                 ,t: 10
                                 }
@@ -356,10 +357,7 @@ function plotPrecipitation (data,dest) { // Function to generate precipitation b
                                }
                        };
          Plotly.newPlot(destElemId
-                    ,{data: [pltlyTraces['MonthlyPrecipitation']
-                            ,pltlyTraces['LongTermAvg']
-						              	,pltlyTraces['stdArea']
-                            ]
+                    ,{data: pltlyTraces
                      ,layout: pltlyLayout
                      }
                     );
@@ -475,7 +473,7 @@ function cs_scale () { // Function to calibrate the colorbar based on the defici
   var dx = [];  for (var i = 0; i < range.length; ++i) dx.push(range[i] * diff + m);
   var cs_hex = grad_zero(dx);
   var out = [];  for (var ii = 0; ii < cs_hex.length; ++ii) {
-    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(cs_hex[ii]);
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(cs_hex[ii]); // This translates color values from hexadecimals to RGB 
     out.push([range[ii],"rgb(" + parseInt(result[1], 16) + "," + parseInt(result[2], 16) + "," + parseInt(result[3], 16) + ")"]);
   }
   return out
@@ -483,7 +481,7 @@ function cs_scale () { // Function to calibrate the colorbar based on the defici
 function stdAreaLine (months, avg, std, nMonthsArea){ // Function to generate cumulative barplots for less than n months
   //var stdMinus = err_bar(avg,std);
   if(months.length < nMonthsArea){
-    		 var stdevSwitch = {//symmetric: false
+    		var stdevSwitch = {//symmetric: false
                            array: std
                            //,arrayminus: stdMinus 
                            ,color: 'rgb(0, 0, 0)'
@@ -494,8 +492,8 @@ function stdAreaLine (months, avg, std, nMonthsArea){ // Function to generate cu
 		 } else { 
 			var stdevSwitch = {};
 			var dplus = avg.map(function (num, idx) {return num + std[idx]});
-			var dminus = avg.map(function (num, idx) {return num - std[idx]}).reverse();
-			var stdArea = {x: months.concat(months.slice(0).reverse()) 
+			//var dminus = avg.map(function (num, idx) {return num - std[idx]}).reverse();
+			/*var stdArea = {x: months.concat(months.slice(0).reverse()) 
                     ,y: dplus.concat(dminus)
                     ,type: 'scatter'
                     ,fill: "tozerox"
@@ -504,7 +502,25 @@ function stdAreaLine (months, avg, std, nMonthsArea){ // Function to generate cu
                     ,showlegend: false
                     ,hoverinfo: 'none'
                     ,legendgroup: 'longTermStats'
-                    };
+                    };*/
+			var dminus = avg.map(function (num, idx) {return num - std[idx]});
+			var stdArea = [{x: months
+							,y: dplus
+							,type: 'scatter'                   // set the chart type
+							,mode: 'lines'
+							,line: {dash: 'dot', color: "black", width: 1}
+					        ,showlegend: false
+							,hoverinfo: 'none'
+							,legendgroup: 'longTermStats'},
+							{x: months
+							,y: dminus
+							,type: 'scatter'                    // set the chart type
+							,mode: 'lines'
+							,line: {dash: 'dot', color: "black", width: 1}
+					        ,showlegend: false
+							,hoverinfo: 'none'
+							,legendgroup: 'longTermStats'
+						}];
 		 };
   return [stdevSwitch, stdArea];
 };
