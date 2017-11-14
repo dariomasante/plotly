@@ -77,7 +77,7 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
 	                         : []; // Make traces for stacked monthly boxes
          var pltlyLayout;
          var avg_cumul = []; data.avgs.reduce(function(a,b,i) { return avg_cumul[i] = a+b; },0); // Calculate cumulative long-term average
-		 var avg_text = avg_cumul.map(function (num) {return num.toFixed(0) + ' mm'}); // Builds label for tooltip
+		 var avg_text = avg_cumul.map(function (num) {return num + ' mm'}); // Builds label for tooltip
          var c_std = cumulStd(data.stds); // cumulative st. deviations of long term averages
          var vals_cumul = []; data.qnts.reduce(function(a,b,i) { return vals_cumul[i] = a+b; },0); // Calculate cumulative monthly precipitation for period of interest
          var delta = [];  for (var n = 0; n < vals_cumul.length; ++n) delta.push(vals_cumul[n] - avg_cumul[n]); // Calculate cumulative differences from long-term average (cumulative deficit surplis)
@@ -85,7 +85,7 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
          m = Math.min(...delta); // This is used several times, so create in the root
 		 var heightColorbar = 0.7;
 		 var tickLimit = heightColorbar / 3;
-         var ticksColorbar = [m, (Math.abs(m*(heightColorbar / (M + m))) > tickLimit) ? m / 2 : '', 0, (Math.abs(M*(heightColorbar / (M + m))) > tickLimit) ? M / 2 : '', M]
+         var ticksColorbar = [m, (Math.abs(m*(heightColorbar / (M + m))) > tickLimit) ? Math.round(m / 2) : '', 0, (Math.abs(M*(heightColorbar / (M + m))) > tickLimit) ? Math.round(M / 2) : '', M];
          var cs = grad_zero(delta); // Bars colors
          var dtx = []; // The text box shown on hovering over the bars
          var full = ['January', 'February', 'March', 'April', 'May', 'June','July', 'August', 'September', 'October', 'November', 'December'];
@@ -118,10 +118,10 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
                  }
              }
              var tx = (delta[d] < 0) ? "deficit ":"surplus ";
-             add.unshift('<B>' + vals_cumul[d].toFixed(0)
+             add.unshift('<B>' + vals_cumul[d]
                          + ' mm</B> - Total precipitation<br\>from '
                          + data.months[0] + ' to ' + data.months[d]
-                         + '<br\><br\>' + '<B>Cumulated ' + tx + delta[d].toFixed(0)
+                         + '<br\><br\>' + '<B>Cumulated ' + tx + delta[d]
                          + ' mm</B><br\><br\>');
              dtx[d] = add.join('');
          }
@@ -141,7 +141,7 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
                                 cmin: m,
                                 colorbar  : {
                                   tickvals   : ticksColorbar,
-								  ticktext : ticksColorbar.map(function (num) {return Math.round(num)}), // Round to integer mm
+								  //ticktext : ticksColorbar.map(function (num) {return Math.round(num)}), // Round to integer mm
 								  ticklen: 2,
                                   thickness: 12,
                                   len: heightColorbar,
