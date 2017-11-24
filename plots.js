@@ -61,6 +61,19 @@ function plotLdiBar (data,dest) { // Function to generate LDI bar plot
                        ,margin: {t: 30
                                 ,b: 70
                                 }
+					   /*,images: [
+    {
+      x: 1.15,
+      y: -0.1,
+      sizex: 0.5,
+      sizey: 0.5,
+      source: "https://upload.wikimedia.org/wikipedia/commons/8/84/European_Commission.svg",
+      xanchor: "right",
+      xref: "paper",
+      yanchor: "bottom",
+      yref: "paper"
+    }
+  ]*/
                        };
          Plotly.newPlot(destElemId
                        ,{data: [pltlyTraces['low'],pltlyTraces['medium'],pltlyTraces['high']]
@@ -193,7 +206,7 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
                        ,yaxis: {autorange: true
                                ,title: 'Monthly cumulative (mm)'
                                ,type: 'linear'
-                               }
+                               } 
                        };
          Plotly.plot(idDest
                     ,{data: pltlyTraces
@@ -245,16 +258,17 @@ function plotSPI (data,dest) { // Function to generate SPI barplots
                                                   ,len: 0.9
                                                   }
                                        }
-                                       //,opacity: 1
                                        ,type: 'bar'
                                        ,text: data.months
                                        ,hoverinfo: 'y+text'
                               };
+		// Add a trace to cope with missing values, by adding a grey column.
+		 pltlyTraces['nan'] = greyNaN(data.months, data.spis);
          pltlyLayout = {autosize: true
                        ,margin: {b: 70
                                 ,t: 10
                                 }
-                       ,hovermode: 'closest'
+					   ,barmode: 'stack'
                        ,hoverlabel: {bgcolor: 'white'
                                     ,font: {color: 'black'}
                                     }
@@ -268,7 +282,7 @@ function plotSPI (data,dest) { // Function to generate SPI barplots
                                ,type: 'category'
                                }
                        ,yaxis: {autorange: true
-                               ,range: [-3.6, 3.6]
+                               //,range: [-3.6, 3.6]
 							                 ,dtick: 0.5
 							                 //,dtick: 1
                                //,title: 'SPI'
@@ -277,7 +291,7 @@ function plotSPI (data,dest) { // Function to generate SPI barplots
                                }
                        };
          Plotly.plot(idDest
-                    ,{data: [pltlyTraces['spi']]
+                    ,{data: [pltlyTraces['spi'], pltlyTraces['nan']]
                      ,layout: pltlyLayout
                      }
                     );
@@ -328,12 +342,15 @@ function plotPrecipitation (data,dest) { // Function to generate precipitation b
                                       ,hoverinfo:'y'
 									                    ,legendgroup: 'longTermStats'
                                       });
-		     pltlyTraces.push(...stdVars[1]);
+		 pltlyTraces.push(...stdVars[1]);
+		 // Add a trace to cope with missing values, by adding a grey column.
+		 pltlyTraces.push(greyNaN(data.months, data.qnts));
          pltlyLayout = {autosize: true
                        ,margin: {r: 150 //NOTE exporting to png leaves wide right margin
                                 ,b: 70
                                 ,t: 10
                                 }
+					   ,barmode: 'stack'
                        //,hovermode: 'closest'
                        ,hoverlabel: {bgcolor: 'white'
                                     ,font: {color: 'black'}
@@ -524,3 +541,24 @@ function stdAreaLine (months, avg, std, nMonthsArea){ // Function to generate cu
 		 };
   return [stdevSwitch, stdArea];
 };
+function greyNaN (xvalues, yvalues){ // Function to make a trace for missing values, by adding a grey column instead of leaving empty.
+  var out = [];
+  var dt = Math.abs(Math.max(...yvalues)) + Math.abs(Math.min(...yvalues));
+  for (var i = 0; i < yvalues.length; i++) {
+     if(yvalues[i] == null){
+		    out[i] = dt
+     } else {
+       out[i] = NaN
+     }
+  }
+  return {x: xvalues
+		  ,y: out
+		  ,name: 'nan'
+		  ,type: 'bar'
+		  ,base: Math.min(...yvalues)
+		  ,opacity: 0.2
+		  ,hoverinfo: 'none'
+		  ,marker:{color: 'grey'}
+		  ,showscale: false
+		  }
+}
