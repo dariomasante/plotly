@@ -562,23 +562,25 @@ function greyNaN (xvalues, yvalues){ // Function to make a trace for missing val
 		  ,showscale: false
 		  }
 }
-// DRAFT
+// DRAFT: add exceptions 
 function pltAnomaly(x, m, M, md, q1, q3){ // Function to make the anomaly boxplots from pre-calculated stats
      var dateBox = [];
      for (var i = 0; i < x.length; ++i) { 
 		 var mdate = Array.apply(null, Array(x.length)).map(function(){return x[i]})
-		 if(md[i] > 2){ var boxColor = 'rgb(252,141,89)'};
-		 if(md[i] < 2 && md[i] > 1){ var boxColor = 'yellow'};
-		 if(md[i] < 1 && md[i] > -1){ var boxColor = 'white'};
-		 if(md[i] > -2 && md[i] < -1){ var boxColor = 'cyan'};
-		 if(md[i] < -2){ var boxColor = 'green'};
+		 if(md[i] > 2){ var boxColor = 'rgb(255,0,0)'};
+		 if(md[i] < 2 && md[i] > 1){ var boxColor = 'rgb(255,222,0)'};
+		 if(md[i] < 1 && md[i] > -1){ var boxColor = 'rgb(255,255,255)'};
+		 if(md[i] > -2 && md[i] < -1){ var boxColor = 'rgb(105,245,0)'};
+		 if(md[i] < -2){ var boxColor = 'rgb(0,130,0)'};
          dateBox[i] = {
 		     x: mdate,
              y:[m[i],q1[i],q1[i],md[i],q3[i],q3[i],M[i]],  
              type: 'box',
-		     marker: {
-			     color: boxColor
-				},
+			 fillcolor: boxColor,
+			 line: {
+				 color: 'black',
+				 width: 1
+			 }
 			 showlegend: false,
 			 boxpoints: false,
 			 hoverinfo: 'x'
