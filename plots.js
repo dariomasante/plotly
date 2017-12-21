@@ -580,12 +580,12 @@ function pltAnomaly(x, m, M, md, q1, q3){ // Function to make the anomaly boxplo
 			 line: {
 				 color: 'black',
 				 width: 1
-			 }
+			 },
 			 showlegend: false,
 			 boxpoints: false,
 			 hoverinfo: 'x'
 			};        
-	 }	
+	 };
 	 dateBox[x.length] = { // add line trace, with median
 	 	x: x,
 		y: md,
