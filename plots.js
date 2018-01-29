@@ -563,7 +563,48 @@ function greyNaN (xvalues, yvalues){ // Function to make a trace for missing val
 		  }
 }
 // DRAFT: add exceptions 
-function pltAnomaly(x, m, M, md, q1, q3){ // Function to make the anomaly boxplots from pre-calculated stats
+/*function pltAnomaly (data,dest){ // Function to plot boxplots of aggregated data (fapar and soil moisture anomaly)
+         var i,k;
+         var destElemId,elDest;
+         var pltlyTraces = [];
+         var pltlyLayout;
+         switch (typeof(dest)) {
+           case "string":
+                destElemId = dest;
+                elDest = document.getElementById(destElemId);
+                break;
+           default:
+                
+                break;
+         }
+         try { // resetting..
+             elDest.innerHTML = "";
+             Plotly.purge(destElemId);
+             i = 0;
+             for (k in data) {
+                 Plotly.deleteTraces(destElemId, i);
+                 i++;
+             }
+         }   catch (e) {}
+		 pltlyTraces = anomalyTraces(data.refDate, data.moistMin, data.moistMax, data.moistMedian, data.moistQ1, data.moistQ3)
+         pltlyLayout = {autosize: true
+                       ,showlegend: false
+                       ,xaxis: {type: 'date'}
+                       ,yaxis: {autorange: true
+                               ,title: 'Anomaly index'
+                               ,type: 'linear'
+                               }
+                       ,margin: {t: 30
+                                ,b: 70
+                                }
+		 }
+		 Plotly.newPlot(destElemId
+                    ,{
+					 data: pltlyTraces
+                     ,layout: pltlyLayout
+                     }		 )
+}
+function anomalyTraces (x, m, M, md, q1, q3){ // Function to make the anomaly boxplots traces from pre-calculated stats
      var dateBox = [];
      for (var i = 0; i < x.length; ++i) { 
 		 var mdate = Array.apply(null, Array(x.length)).map(function(){return x[i]})
@@ -585,7 +626,7 @@ function pltAnomaly(x, m, M, md, q1, q3){ // Function to make the anomaly boxplo
 			 boxpoints: false,
 			 hoverinfo: 'x'
 			};        
-	 };
+	 };	
 	 dateBox[x.length] = { // add line trace, with median
 	 	x: x,
 		y: md,
@@ -600,3 +641,116 @@ function pltAnomaly(x, m, M, md, q1, q3){ // Function to make the anomaly boxplo
 		}
     return dateBox;
 };
+
+function anomalyTraces (x, vals){ // Function to make the anomaly boxplots traces from pre-calculated stats
+     var dateBox = {
+       veryHigh: [],
+       high: [],
+       middle: [],
+       low: [],
+       veryLow: []
+     };
+     for (var i = 0; i < x.length; ++i) { 
+		   //var mdate = Array.apply(null, Array(x.length)).map(function(){return x[i]})
+       var veryLow = 0;
+       var low = 0;
+       var middle = 0;
+       var high = 0;
+       var veryHigh = 0;
+		   for (var ii = 0; ii < vals[i].length; ++ii) { 
+			   if(vals[i][ii] >= 2){ veryHigh = veryHigh + 1};
+         if(vals[i][ii] < 2 && vals[i][ii] >= 1){  high = high + 1};
+		     if(vals[i][ii] < 1 && vals[i][ii] > -1){  middle = middle + 1};
+		     if(vals[i][ii] > -2 && vals[i][ii] <= -1){  low = low + 1};
+		     if(vals[i][ii] <= -2){  veryLow = veryLow + 1};
+       };
+       dateBox.veryLow[i] = Math.round(100 * veryLow / vals[i].length);
+       dateBox.low[i] = Math.round(100 * low / vals[i].length);
+       dateBox.middle[i] = Math.round(100 * middle / vals[i].length);
+       dateBox.high[i] = Math.round(100 * high / vals[i].length);
+       dateBox.veryHigh[i] = Math.round(100 * veryHigh / vals[i].length);
+     };
+  var traces = [{x: x
+                 ,y: dateBox.veryLow
+                                 ,name: 'Below -2 (wetter)'
+                                 ,opacity: 1
+                                 ,type: 'bar'
+                                 ,marker: {color: 'rgb(0,130,0)'}
+                                },
+      {x: x
+                 ,y: dateBox.low
+                                 ,name: 'Between -1 and -2'
+                                 ,opacity: 1
+                                 ,type: 'bar'
+                                 ,marker: {color: 'rgb(105,245,0)'}
+                                },
+       {x: x
+                 ,y: dateBox.middle
+                                 ,name: 'Normal'
+                                 ,opacity: 1
+                                 ,type: 'bar'
+                                 ,marker: {color: 'white',     line: {
+      color: 'black', width: 1}
+                           }
+                                },
+       {x: x
+                 ,y: dateBox.high
+                                 ,name: 'Between +1 and +2'
+                                 ,opacity: 1
+                                 ,type: 'bar'
+                                 ,marker: {color: 'rgb(255,222,0)'}
+                                },
+       {x: x
+                 ,y: dateBox.veryHigh
+                                 ,name: 'Above +2 (drier)'
+                                 ,opacity: 1
+                                 ,type: 'bar'
+                                 ,marker: {color: 'rgb(255,0,0)'}
+                                }
+       ]
+  return(traces)
+};
+
+function plotSoilBar (data,dest) { // Function to generate the LDI bar plot
+		     var i,k;
+         var destElemId,elDest;
+         var pltlyTraces = {};
+         var pltlyLayout;
+         switch (typeof(dest)) {
+           case "string":
+                destElemId = dest;
+                elDest = document.getElementById(destElemId);
+                break;
+           default:
+                break;
+         }
+         try { // resetting all plotly charts..
+             elDest.innerHTML = "";
+             Plotly.purge(destElemId);
+             i = 0;
+             for (k in data) {
+                 Plotly.deleteTraces(destElemId, i);
+                 i++;
+             }
+         }   catch (e) {}
+		 // Make three traces, one for each LDI class
+         pltlyTraces = anomalyTraces (data.months, data.smVals);
+  //console.log(anomalyTraces(data.months, data.smVals))
+         pltlyLayout = {autosize: true
+                       ,barmode: 'stack'
+                       ,showlegend: true
+                       ,xaxis: {type: 'date'}
+                       ,yaxis: {autorange: true
+                               ,title: '% of the one <br> degree cell / region'
+                               ,type: 'linear'
+                               }
+                       ,margin: {t: 30
+                                ,b: 70
+                                }
+                       };
+         Plotly.newPlot(destElemId
+                       ,{data: pltlyTraces
+                        ,layout: pltlyLayout
+                        }
+                       );
+}*/
