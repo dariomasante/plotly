@@ -303,6 +303,7 @@ function plotPrecipitation (data,dest) { // Function to generate precipitation b
          var pltlyLayout;
 		 var nMaxMonths = 36; // Max number of months for std.dev. to be shown as bars, not shade
 		 var stdVars = stdAreaLine (data.months, data.avgs, data.stds, nMaxMonths);
+	var labelPerc = []; for (i = 0; i < data.qnts.length; i++) {labelPerc[i] = data.qnts[i] + ' mm<br\>(' + Math.round(data.qnts[i] / data.avgs[i] * 100) + '% of normal)'};
          switch (typeof(dest)) {
            case "string":
                 destElemId = dest;
@@ -326,7 +327,8 @@ function plotPrecipitation (data,dest) { // Function to generate precipitation b
                                                ,name: 'Monthly precipitation'
                                                ,opacity: 1
                                                ,type: 'bar'
-											                         ,hoverinfo:'y' 
+						,text: labelPerc 
+                          			,hoverinfo: 'text'
                                                });
          pltlyTraces.push({x: data.months
                                       ,y: data.avgs
