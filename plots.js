@@ -1,9 +1,5 @@
 // TODO: 
 /* 
-- Add comments to code
-- ? Change plot SPI with coloured background and spi periods in parallel (or use lines)
-- Restore in SPI plots fixed y scale to -3 +3 and out of scale values
--- Match spi colorbar perfectly -3 +3 (or add some text)
 - Finalise fapar and soil moist time series
 - Add categorical timeseries for RDrI clicked cell (single horizontal bar)
 */
@@ -663,75 +659,91 @@ function anomalyTraces (x, m, M, md, q1, q3){ // Function to make the anomaly bo
 		name: 'median'
 		}
     return dateBox;
-};
+};*/
 
-function anomalyTraces (x, vals){ // Function to make the anomaly boxplots traces from pre-calculated stats
+/*function anomalyTraces (x, vals){ // Function to make the percent anomaly stacked bars from cell values
      var dateBox = {
        veryHigh: [],
        high: [],
        middle: [],
        low: [],
-       veryLow: []
+       veryLow: [],
+       missing: []
      };
      for (var i = 0; i < x.length; ++i) { 
-		   //var mdate = Array.apply(null, Array(x.length)).map(function(){return x[i]})
        var veryLow = 0;
        var low = 0;
        var middle = 0;
        var high = 0;
        var veryHigh = 0;
+	   var missing = 0;
+	   var l = vals[i].length;
+	   var border = {color: 'grey',width: 1,line: {color: 'grey',width: 1}};
 		   for (var ii = 0; ii < vals[i].length; ++ii) { 
-			   if(vals[i][ii] >= 2){ veryHigh = veryHigh + 1};
-         if(vals[i][ii] < 2 && vals[i][ii] >= 1){  high = high + 1};
+			 if(vals[i][ii] >= 2){ veryHigh = veryHigh + 1};
+			 if(vals[i][ii] < 2 && vals[i][ii] >= 1){  high = high + 1};
 		     if(vals[i][ii] < 1 && vals[i][ii] > -1){  middle = middle + 1};
 		     if(vals[i][ii] > -2 && vals[i][ii] <= -1){  low = low + 1};
 		     if(vals[i][ii] <= -2){  veryLow = veryLow + 1};
+			 if(vals[i][ii] === null){ missing = missing + 1; middle = middle - 1 }; 
        };
-       dateBox.veryLow[i] = Math.round(100 * veryLow / vals[i].length);
-       dateBox.low[i] = Math.round(100 * low / vals[i].length);
-       dateBox.middle[i] = Math.round(100 * middle / vals[i].length);
-       dateBox.high[i] = Math.round(100 * high / vals[i].length);
-       dateBox.veryHigh[i] = Math.round(100 * veryHigh / vals[i].length);
+       dateBox.veryLow[i] = Math.round(100 * veryLow / l);
+       dateBox.low[i] = Math.round(100 * low / l);
+       dateBox.middle[i] = Math.round(100 * middle / l);
+       dateBox.high[i] = Math.round(100 * high / l);
+       dateBox.veryHigh[i] = Math.round(100 * veryHigh / l);
+       dateBox.missing[i] = Math.round(100 * missing / l);
      };
-  var traces = [{x: x
-                 ,y: dateBox.veryLow
-                                 ,name: 'Below -2 (wetter)'
-                                 ,opacity: 1
-                                 ,type: 'bar'
-                                 ,marker: {color: 'rgb(0,130,0)'}
-                                },
-      {x: x
-                 ,y: dateBox.low
-                                 ,name: 'Between -1 and -2'
-                                 ,opacity: 1
-                                 ,type: 'bar'
-                                 ,marker: {color: 'rgb(105,245,0)'}
-                                },
+	 var traces = [
        {x: x
-                 ,y: dateBox.middle
-                                 ,name: 'Normal'
+                 ,y: dateBox.veryHigh
+                                 ,name: 'Above +2 (drier)'
                                  ,opacity: 1
                                  ,type: 'bar'
-                                 ,marker: {color: 'white',     line: {
-      color: 'black', width: 1}
-                           }
+                                 ,marker: {color: 'rgb(255,0,0)',line: border}
                                 },
        {x: x
                  ,y: dateBox.high
                                  ,name: 'Between +1 and +2'
                                  ,opacity: 1
                                  ,type: 'bar'
-                                 ,marker: {color: 'rgb(255,222,0)'}
+                                 ,marker: {color: 'rgb(255,0,0)',line: border}
                                 },
-       {x: x
-                 ,y: dateBox.veryHigh
-                                 ,name: 'Above +2 (drier)'
+	   {x: x
+                 ,y: dateBox.middle
+                                 ,name: 'Normal'
                                  ,opacity: 1
                                  ,type: 'bar'
-                                 ,marker: {color: 'rgb(255,0,0)'}
+                                 ,marker: {color: 'rgb(255,0,0)',line: border}
+								 ,visible: 'legendonly'
+                           }
+                                },
+	   {x: x
+                 ,y: dateBox.low
+                                 ,name: 'Between -1 and -2'
+                                 ,opacity: 1
+                                 ,type: 'bar'
+                                 ,marker: {color: 'rgb(255,0,0)',line: border}
+								 ,visible: 'legendonly'
+                                },
+		{x: x
+                 ,y: dateBox.veryLow
+                                 ,name: 'Below -2 (wetter)'
+                                 ,opacity: 1
+                                 ,type: 'bar'
+                                 ,marker: {color: 'rgb(255,0,0)',line: border}
+								 ,visible: 'legendonly'
+                                },
+		{x: x
+                 ,y: dateBox.missing
+                                 ,name: 'Missing data'
+                                 ,opacity: 1
+                                 ,type: 'bar'
+                                 ,marker: {color: 'rgb(240,240,240)',line: border}
+                                 ,visible: 'legendonly'
                                 }
        ]
-  return(traces)
+     return(traces)
 };
 
 function plotSoilBar (data,dest) { // Function to generate the LDI bar plot
