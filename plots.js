@@ -662,68 +662,45 @@ function anomalyTraces (x, m, M, md, q1, q3){ // Function to make the anomaly bo
 };*/
 
 /*function anomalyTraces (x, vals){ // Function to make the percent anomaly stacked bars from cell values
-     var dateBox = {
-       veryHigh: [],
-       high: [],
-       middle: [],
-       low: [],
-       veryLow: [],
-       missing: []
-     };
-     for (var i = 0; i < x.length; ++i) { 
-       var veryLow = 0;
-       var low = 0;
-       var middle = 0;
-       var high = 0;
-       var veryHigh = 0;
-	   var missing = 0;
-	   var l = vals[i].length;
-	   var border = {color: 'grey',width: 1,line: {color: 'grey',width: 1}};
-		   for (var ii = 0; ii < vals[i].length; ++ii) { 
-			 if(vals[i][ii] >= 2){ veryHigh = veryHigh + 1};
-			 if(vals[i][ii] < 2 && vals[i][ii] >= 1){  high = high + 1};
-		     if(vals[i][ii] < 1 && vals[i][ii] > -1){  middle = middle + 1};
-		     if(vals[i][ii] > -2 && vals[i][ii] <= -1){  low = low + 1};
-		     if(vals[i][ii] <= -2){  veryLow = veryLow + 1};
-			 if(vals[i][ii] === null){ missing = missing + 1; middle = middle - 1 }; 
-       };
-       dateBox.veryLow[i] = Math.round(100 * veryLow / l);
-       dateBox.low[i] = Math.round(100 * low / l);
-       dateBox.middle[i] = Math.round(100 * middle / l);
-       dateBox.high[i] = Math.round(100 * high / l);
-       dateBox.veryHigh[i] = Math.round(100 * veryHigh / l);
-       dateBox.missing[i] = Math.round(100 * missing / l);
-     };
+   var dateBox = vals
 	 var traces = [
        {x: x
                  ,y: dateBox.veryHigh
                                  ,name: 'Above +2 (drier)'
                                  ,opacity: 1
                                  ,type: 'bar'
-                                 ,marker: {color: 'rgb(255,0,0)',line: border}
+                                 ,marker: {color: 'rgb(255,0,0)' 
+                                           //,line: {color: 'grey',width: 0.5}
+                                          }
                                 },
        {x: x
                  ,y: dateBox.high
                                  ,name: 'Between +1 and +2'
                                  ,opacity: 1
                                  ,type: 'bar'
-                                 ,marker: {color: 'rgb(255,0,0)',line: border}
+                                 ,marker: {color: 'rgb(255,222,0)'
+                                           //,line: {color: 'grey',width: 0.5}
+                                          }
                                 },
 	   {x: x
                  ,y: dateBox.middle
                                  ,name: 'Normal'
                                  ,opacity: 1
                                  ,type: 'bar'
-                                 ,marker: {color: 'rgb(255,0,0)',line: border}
+                                 ,marker: {color: 'rgb(255,255,255)' 
+                                           ,line: {color: 'grey',width: 0.5}
+                                          }
 								 ,visible: 'legendonly'
-                           }
-                                },
+                           },
+                             
 	   {x: x
                  ,y: dateBox.low
                                  ,name: 'Between -1 and -2'
                                  ,opacity: 1
                                  ,type: 'bar'
-                                 ,marker: {color: 'rgb(255,0,0)',line: border}
+                                 ,marker: {color: 'rgb(105,245,0)' 
+                                           //,line: {color: 'grey',width: 0.5}
+                                          }
 								 ,visible: 'legendonly'
                                 },
 		{x: x
@@ -731,7 +708,9 @@ function anomalyTraces (x, m, M, md, q1, q3){ // Function to make the anomaly bo
                                  ,name: 'Below -2 (wetter)'
                                  ,opacity: 1
                                  ,type: 'bar'
-                                 ,marker: {color: 'rgb(255,0,0)',line: border}
+                                 ,marker: {color: 'rgb(0,130,0)'
+                                           //,line: {color: 'grey',width: 0.5}
+                                          }
 								 ,visible: 'legendonly'
                                 },
 		{x: x
@@ -739,14 +718,16 @@ function anomalyTraces (x, m, M, md, q1, q3){ // Function to make the anomaly bo
                                  ,name: 'Missing data'
                                  ,opacity: 1
                                  ,type: 'bar'
-                                 ,marker: {color: 'rgb(240,240,240)',line: border}
+                                 ,marker: {color: 'rgb(240,240,240)'
+                                           //,line: {color: 'grey',width: 0.5}
+                                          }
                                  ,visible: 'legendonly'
                                 }
-       ]
+       ];
      return(traces)
 };
 
-function plotSoilBar (data,dest) { // Function to generate the LDI bar plot
+function plotSoilFapar (data,dest) { // Function to generate the LDI bar plot
 		     var i,k;
          var destElemId,elDest;
          var pltlyTraces = {};
