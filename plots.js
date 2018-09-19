@@ -53,6 +53,7 @@ function plotLdiBar (data,dest) { // Function to generate the LDI bar plot
                        ,showlegend: true
                        ,xaxis: {type: 'date'}
                        ,yaxis: {autorange: true
+                               ,fixedrange: true
                                ,title: '% of the<br>whole region'
                                ,type: 'linear'
                                }
@@ -93,9 +94,7 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
          var c_std = cumulStd(data.stds); // cumulative st. deviations of long term averages
          var vals_cumul = []; data.qnts.reduce(function(a,b,i) { return vals_cumul[i] = a+b; },0); // Calculate cumulative monthly precipitation for period of interest
          var delta = [];  for (var n = 0; n < vals_cumul.length; ++n) delta.push(vals_cumul[n] - avg_cumul[n]); // Calculate cumulative differences from long-term average (cumulative deficit surplis)
-         //M = Math.max(...delta); // This is used several times, so create in the root
-         //m = Math.min(...delta); // This is used several times, so create in the root
-         // for old browser compatibility
+         // for old browser compatibility, instead of: Math.min(...delta);
          M = Math.max.apply(null,delta); // This is used several times, so create in the root
          m = Math.min.apply(null,delta); // This is used several times, so create in the root
 		 var heightColorbar = 0.7;
@@ -127,18 +126,17 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
              var add = [];
              for (var dd = 0; dd <= d; dd++) { // Find which months to show
                  add.unshift('<i>' + full[parseFloat((data.months[dd]).split("-")[1]) - 1] + ': ' + data.qnts[dd] + ' mm<i\><br\>');
-                 if (dd >= 6){ // Show only last 6 months on hover
-                    add.splice(6, 1);
-                    add[6] = '[...]';
+                 if (dd >= 4){ // Show only last 4 months on hover
+                    add.splice(4, 1);
+                    add[4] = '[...]';
                  }
              }
 			 // Dynamically bind with a meaningful text
-             var tx = (delta[d] < 0) ? "deficit ":"surplus ";
-             add.unshift('<B>' + vals_cumul[d]
-                         + ' mm</B> - Total precipitation<br\>from '
-                         + data.months[0] + ' to ' + data.months[d]
-                         + '<br\><br\>' + '<B>Cumulated ' + tx + delta[d]
-                         + ' mm</B><br\><br\>');
+             var tx = (delta[d] < 0) ? "deficit: ":"surplus: ";
+             add.unshift(vals_cumul[d] + ' mm - Cumulative precipitation<br\>from '
+                         + data.months[0] + ' to ' + data.months[d] + '.<br\><br\><B>' 
+						 + Math.round(vals_cumul[d] / (vals_cumul[d] - delta[d]) * 100) + '% of normal</B> for the period.' 
+                         + '<br\>' + '<B>Cumulated ' + tx + delta[d] + ' mm</B><br\><br\>');
              dtx[d] = add.join('');
          }
          pltlyTraces.unshift({ // Full color bars representing total cumulative precipitation, overlapping the stacked ones
@@ -183,8 +181,7 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
                           ,hoverinfo: 'text'
 						              ,legendgroup: 'longTermStats'
                           });
-		     //pltlyTraces.push(...stdVars[1]);
-		     pltlyTraces.push.apply(pltlyTraces,stdVars[1]);
+		 pltlyTraces.push.apply(pltlyTraces,stdVars[1]);
          pltlyLayout = {autosize: true
                        ,barmode: 'stack'
                        ,hoverlabel: {bgcolor: 'white'
@@ -210,6 +207,7 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
                                }
                        ,yaxis: {autorange: true
 							   ,rangemode: 'nonnegative'
+							   ,fixedrange: true
                                ,title: 'Monthly cumulative (mm)'
                                ,type: 'linear'
                                } 
@@ -220,15 +218,11 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
                      }
                     );
 }
-
 function plotSPI (data,dest) { // Function to generate SPI barplots
          var i,k;
          var idDest,elDest;
          var pltlyTraces = {};
          var pltlyLayout;
-		 /*for(var i = 0; i < data.spis.length; i++){ // Round to 2 decimal
-			data.spis[i] = data.spis[i].toFixed(2); 
-		 }*/
          switch (typeof(dest)) {
            case "string":
                 idDest = dest;
@@ -253,7 +247,6 @@ function plotSPI (data,dest) { // Function to generate SPI barplots
                               ,marker: {//,color: grad(steps())
 								                       color: grad(data.spis)
                                        ,showscale: true
-                                       //,colorscale: [[0, 'rgb(124, 6, 7)'], [0.5, 'rgb(235, 226, 226)'], [1,'rgb(31, 40, 162)']]
 								                       ,colorscale: [[0, 'rgb(255,0,0)'], [0.25, 'rgb(255,170,0)'], [0.375, 'rgb(255,255,0)'], [0.5, 'rgb(255,255,255)'], [0.625, 'rgb(233,204,249)'], [0.75, 'rgb(131,51,147)'], [1,'rgb(0,0,255)']]
                                        ,cmax:3
                                        ,cmin:-3
@@ -290,6 +283,7 @@ function plotSPI (data,dest) { // Function to generate SPI barplots
                                }
                        ,yaxis: {autorange: true
                                //,range: [-3.6, 3.6]
+                               ,fixedrange: true
 							                 ,dtick: 0.5
 							                 //,dtick: 1
                                //,title: 'SPI'
@@ -310,7 +304,7 @@ function plotPrecipitation (data,dest) { // Function to generate precipitation b
          var pltlyLayout;
          var nMaxMonths = 36; // Max number of months for std.dev. to be shown as bars, not shade
          var stdVars = stdAreaLine (data.months, data.avgs, data.stds, nMaxMonths);
-         var labelPerc = []; for (i = 0; i < data.qnts.length; i++) {labelPerc[i] = data.qnts[i] + ' mm<br\>(' + Math.round(data.qnts[i] / data.avgs[i] * 100) + '% of normal)'};
+         var labelPerc = []; for (i = 0; i < data.qnts.length; i++) {labelPerc[i] = data.qnts[i] + ' mm<br\>' + Math.round(data.qnts[i] / data.avgs[i] * 100) + '% of normal'};
          switch (typeof(dest)) {
            case "string":
                 destElemId = dest;
@@ -352,9 +346,7 @@ function plotPrecipitation (data,dest) { // Function to generate precipitation b
 
                           ,legendgroup: 'longTermStats'
                           });
-		 //pltlyTraces.push(...stdVars[1]); // Show different look if more than n months are shown
 		 pltlyTraces.push.apply(pltlyTraces,stdVars[1]); // Show different look if more than n months are shown
-		 pltlyTraces.push(greyNaN(data.months, data.qnts)); // Add a trace to cope with missing values, by adding a grey column.
          pltlyLayout = {autosize: true
                        ,margin: {r: 150 //NOTE exporting to png leaves wide right margin
                                 ,b: 70
@@ -378,6 +370,7 @@ function plotPrecipitation (data,dest) { // Function to generate precipitation b
 							   ,type: 'category'
                                }
                        ,yaxis: {autorange: true
+                       ,fixedrange: true
 							   ,rangemode: 'nonnegative'
                                ,title: 'Precipitation (mm)'
                                ,type: 'linear'
@@ -391,9 +384,8 @@ function plotPrecipitation (data,dest) { // Function to generate precipitation b
 }
 function grad (vals) { // Function to assign color to columns in barplots
 		     var intervals = []; for (var i = 0; i < 50; ++i) intervals.push((6 / 50) * i - 3); // Range of SPI colors between 3 and -3, by 50 steps of color (calculated off line with R) 
-         //var gradient = ['#7C0607','#801314','#841D1E','#882526','#8C2D2D','#903435','#943B3C','#984243','#9D494A','#A15151','#A55858','#A95F5F','#AE6667','#B26E6E','#B67676','#BB7E7E','#BF8686','#C48F8F','#C99898','#CDA2A2','#D2ACAC','#D8B7B7','#DDC3C3','#E3D0D0','#EBE2E2','#E3E3EA','#D3D4E2','#C7C7DB','#BCBCD6','#B2B3D1','#A9AACC','#A0A1C7','#9899C3','#9091BF','#888ABB','#8183B7','#7A7CB4','#7375B1','#6D6EAD','#6668AB','#6062A8','#595CA5','#5356A3','#4D50A1','#464A9F','#40449E','#393D9E','#32379E','#29309F','#1F28A2'];
 		     var gradient = ['#FF0000','#FF1400','#FF2900','#FF3E00','#FF5300','#FF6800','#FF7C00','#FF9100','#FFA600','#FFB200','#FFBD00','#FFC700','#FFD100','#FFDC00','#FFE600','#FFF100','#FFFB00','#FFFF14','#FFFF34','#FFFF53','#FFFF72','#FFFF91','#FFFFB0','#FFFFD0','#FFFFEF','#FDFBFE','#FAF5FD','#F8EFFD','#F5E9FC','#F2E2FB','#F0DCFA','#EDD6FA','#EAD0F9','#E4C5F4','#D8B3E8','#CBA0DB','#BF8DCF','#B27AC2','#A668B6','#9955A9','#8D429D','#803195','#702BA2','#6025AF','#501FBC','#4018CA','#3012D7','#200CE4','#1006F1','#0000FF'];
-         var i,val,diff,newdiff;
+         var i,val,newdiff;
 			   var colors = [];
          for (i = 0; i < vals.length; ++i) {
              var diff = 10000; // Just to generate the variable
@@ -408,31 +400,7 @@ function grad (vals) { // Function to assign color to columns in barplots
          }
 			   return colors;
 }
-/*function err_bar (avg,err) { // Function to trunc st.dev. to zero and avoid negative values
-         var out = [];
-         for (var i = 0; i < avg.length; ++i) {
-             var d = avg[i] - err[i];
-             if (d < 0) {
-                out.push(avg[i]);
-             } else {
-				out.push(err[i]);
-			 }
-         }
-         return (out)
-}*/
-/*
-function out_scale (val) {
-         var out = [];
-         for (var i = 0; i < val.length; ++i) {
-             v = '';
-             if (val[i] < -3.5 | val[i] > 3.5){
-                v = val[i].toFixed(2);
-             }
-             out.push(v);
-         }
-         return(out)
-}
-*/
+
 function make_trace (x, vals){ // Function to make the cumulative stacked bars
          var bars = [];
          var k,i,ii;
@@ -511,6 +479,9 @@ function cs_scale () { // Function to calibrate the colorbar based on the defici
   }
   return out;
 }
+
+
+
 function stdAreaLine (months, avg, std, nMonthsArea){ // Function to generate cumulative barplots for less than n months
   //var stdMinus = err_bar(avg,std);
   if(months.length < nMonthsArea){
@@ -525,17 +496,6 @@ function stdAreaLine (months, avg, std, nMonthsArea){ // Function to generate cu
 		 } else { 
 			var stdevSwitch = {};
 			var dplus = avg.map(function (num, idx) {return num + std[idx];});
-			//var dminus = avg.map(function (num, idx) {return num - std[idx]}).reverse();
-			/*var stdArea = {x: months.concat(months.slice(0).reverse()) 
-                    ,y: dplus.concat(dminus)
-                    ,type: 'scatter'
-                    ,fill: "tozerox"
-                    ,fillcolor: "rgba(0,0,0,0.2)" 
-                    ,line: {color: "transparent"}
-                    ,showlegend: false
-                    ,hoverinfo: 'none'
-                    ,legendgroup: 'longTermStats'
-                    };*/
 			var dminus = avg.map(function (num, idx) {return num - std[idx];});
 			var stdArea = [{x: months
 							,y: dplus
@@ -559,7 +519,6 @@ function stdAreaLine (months, avg, std, nMonthsArea){ // Function to generate cu
 };
 function greyNaN (xvalues, yvalues){ // Function to make a trace for missing values, by adding a grey column instead of leaving empty.
   var out = [];
-  //var dt = Math.abs(Math.max(...yvalues)) + Math.abs(Math.min(...yvalues));
   var dt = Math.abs(Math.max.apply(null,yvalues)) + Math.abs(Math.min.apply(null,yvalues));
   for (var i = 0; i < yvalues.length; i++) {
      if(yvalues[i] == null){
@@ -572,100 +531,18 @@ function greyNaN (xvalues, yvalues){ // Function to make a trace for missing val
 		  ,y: out
 		  ,name: 'nan'
 		  ,type: 'bar'
-		  //,base: Math.min(...yvalues)
 		  ,base: Math.min.apply(null,yvalues)
-		  ,opacity: 0.2
 		  ,hoverinfo: 'none'
-		  ,marker:{color: 'grey'}
+		  ,marker:{color: 'rgba(200,200,200,0.2)'}
 		  ,showscale: false
 		  ,showlegend: false
 		  };
 }
-// DRAFT: add exceptions 
-/*function pltAnomaly (data,dest){ // Function to plot boxplots of aggregated data (fapar and soil moisture anomaly)
-         var i,k;
-         var destElemId,elDest;
-         var pltlyTraces = [];
-         var pltlyLayout;
-         switch (typeof(dest)) {
-           case "string":
-                destElemId = dest;
-                elDest = document.getElementById(destElemId);
-                break;
-           default:
-                
-                break;
-         }
-         try { // resetting..
-             elDest.innerHTML = "";
-             Plotly.purge(destElemId);
-             i = 0;
-             for (k in data) {
-                 Plotly.deleteTraces(destElemId, i);
-                 i++;
-             }
-         }   catch (e) {}
-		 pltlyTraces = anomalyTraces(data.refDate, data.moistMin, data.moistMax, data.moistMedian, data.moistQ1, data.moistQ3)
-         pltlyLayout = {autosize: true
-                       ,showlegend: false
-                       ,xaxis: {type: 'date'}
-                       ,yaxis: {autorange: true
-                               ,title: 'Anomaly index'
-                               ,type: 'linear'
-                               }
-                       ,margin: {t: 30
-                                ,b: 70
-                                }
-		 }
-		 Plotly.newPlot(destElemId
-                    ,{
-					 data: pltlyTraces
-                     ,layout: pltlyLayout
-                     }		 )
-}
-function anomalyTraces (x, m, M, md, q1, q3){ // Function to make the anomaly boxplots traces from pre-calculated stats
-     var dateBox = [];
-     for (var i = 0; i < x.length; ++i) { 
-		 var mdate = Array.apply(null, Array(x.length)).map(function(){return x[i]})
-		 if(md[i] > 2){ var boxColor = 'rgb(255,0,0)'};
-		 if(md[i] < 2 && md[i] > 1){ var boxColor = 'rgb(255,222,0)'};
-		 if(md[i] < 1 && md[i] > -1){ var boxColor = 'rgb(255,255,255)'};
-		 if(md[i] > -2 && md[i] < -1){ var boxColor = 'rgb(105,245,0)'};
-		 if(md[i] < -2){ var boxColor = 'rgb(0,130,0)'};
-         dateBox[i] = {
-		     x: mdate,
-             y:[m[i],q1[i],q1[i],md[i],q3[i],q3[i],M[i]],  
-             type: 'box',
-			 fillcolor: boxColor,
-			 line: {
-				 color: 'black',
-				 width: 1
-			 },
-			 showlegend: false,
-			 boxpoints: false,
-			 hoverinfo: 'x'
-			};        
-	 };	
-	 dateBox[x.length] = { // add line trace, with median
-	 	x: x,
-		y: md,
-		type: 'scatter',
-		line: {
-			color: 'rgba(0, 0, 0, 0.5)'
-			,dash: 'solid'
-            ,shape: 'linear'
-            ,width: 2
-        },   
-		name: 'median'
-		}
-    return dateBox;
-};*/
 
-/*function anomalyTraces (x, vals){ // Function to make the percent anomaly stacked bars from cell values
-   var dateBox = vals
+function anomalyTraces (x, vals){ // Function to make the percent anomaly stacked bars from cell values
 	 var traces = [
        {x: x
-                 ,y: dateBox.veryHigh
+                 ,y: vals.veryHigh
                                  ,name: 'Above +2 (drier)'
                                  ,opacity: 1
                                  ,type: 'bar'
@@ -674,7 +551,7 @@ function anomalyTraces (x, m, M, md, q1, q3){ // Function to make the anomaly bo
                                           }
                                 },
        {x: x
-                 ,y: dateBox.high
+                 ,y: vals.high
                                  ,name: 'Between +1 and +2'
                                  ,opacity: 1
                                  ,type: 'bar'
@@ -683,7 +560,7 @@ function anomalyTraces (x, m, M, md, q1, q3){ // Function to make the anomaly bo
                                           }
                                 },
 	   {x: x
-                 ,y: dateBox.middle
+                 ,y: vals.middle
                                  ,name: 'Normal'
                                  ,opacity: 1
                                  ,type: 'bar'
@@ -691,10 +568,10 @@ function anomalyTraces (x, m, M, md, q1, q3){ // Function to make the anomaly bo
                                            ,line: {color: 'grey',width: 0.5}
                                           }
 								 ,visible: 'legendonly'
-                           },
+                                },
                              
 	   {x: x
-                 ,y: dateBox.low
+                 ,y: vals.low
                                  ,name: 'Between -1 and -2'
                                  ,opacity: 1
                                  ,type: 'bar'
@@ -704,7 +581,7 @@ function anomalyTraces (x, m, M, md, q1, q3){ // Function to make the anomaly bo
 								 ,visible: 'legendonly'
                                 },
 		{x: x
-                 ,y: dateBox.veryLow
+                 ,y: vals.veryLow
                                  ,name: 'Below -2 (wetter)'
                                  ,opacity: 1
                                  ,type: 'bar'
@@ -714,21 +591,21 @@ function anomalyTraces (x, m, M, md, q1, q3){ // Function to make the anomaly bo
 								 ,visible: 'legendonly'
                                 },
 		{x: x
-                 ,y: dateBox.missing
+                 ,y: vals.missing
                                  ,name: 'Missing data'
                                  ,opacity: 1
                                  ,type: 'bar'
                                  ,marker: {color: 'rgb(240,240,240)'
                                            //,line: {color: 'grey',width: 0.5}
-                                          }
+                                }
                                  ,visible: 'legendonly'
                                 }
        ];
-     return(traces)
+     return(traces);
 };
 
-function plotSoilFapar (data,dest) { // Function to generate the LDI bar plot
-		     var i,k;
+function plotSoilFapar (data,dest) { // Function to generate the fapar/soil moisture bar plot
+		 var i,k;
          var destElemId,elDest;
          var pltlyTraces = {};
          var pltlyLayout;
@@ -749,15 +626,12 @@ function plotSoilFapar (data,dest) { // Function to generate the LDI bar plot
                  i++;
              }
          }   catch (e) {}
-		 // Make three traces, one for each LDI class
-         pltlyTraces = anomalyTraces (data.months, data.smVals);
-  //console.log(anomalyTraces(data.months, data.smVals))
          pltlyLayout = {autosize: true
                        ,barmode: 'stack'
                        ,showlegend: true
                        ,xaxis: {type: 'date'}
                        ,yaxis: {autorange: true
-                               ,title: '% of the one <br> degree cell / region'
+                               ,title: '% of the selected <br> one degree cell'
                                ,type: 'linear'
                                }
                        ,margin: {t: 30
@@ -765,8 +639,22 @@ function plotSoilFapar (data,dest) { // Function to generate the LDI bar plot
                                 }
                        };
          Plotly.newPlot(destElemId
-                       ,{data: pltlyTraces
+                       ,{data: anomalyTraces (data.months, data.smVals) // Make five traces, one for anomaly class
                         ,layout: pltlyLayout
                         }
                        );
-}*/
+}
+
+function faparSoil(jsonObj){ // from json to format suitable for plot
+	var obj = jsonObj.features[0].properties.sm;
+	//console.log(obj);
+	var mm = Object.keys(obj);
+	var smv = []
+	for (var i = 0; i < mm.length; ++i) {
+		smv.push(obj[mm[i]].anomaly);
+	}
+	//console.log(smv)
+	return({months: mm,
+			smVals: smv
+	});
+};
