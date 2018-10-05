@@ -1,9 +1,10 @@
 // TODO: 
 /* 
-- Finalise fapar and soil moist time series
-- Add categorical timeseries for RDrI clicked cell (single horizontal bar)
+- ?Add categorical timeseries for RDrI clicked cell (single horizontal bar)
 */
-
+function pltModebar () { // Sets mode/action bar icons available on plotly plots
+	 return {displaylogo: false, modeBarButtonsToRemove: ['sendDataToCloud','toggleSpikelines','resetViews','zoomIn2d','zoomOut2d','resetScale2d']}
+}
 function plotLdiBar (data,dest) { // Function to generate the LDI bar plot
 		     var i,k;
          var destElemId,elDest;
@@ -57,8 +58,9 @@ function plotLdiBar (data,dest) { // Function to generate the LDI bar plot
                                ,title: '% of the<br>whole region'
                                ,type: 'linear'
                                }
-                       ,margin: {t: 30
-                                ,b: 70
+						,height: 200
+                       ,margin: {t: 20
+                                ,b: 30
                                 }
 					   /*,images: [
     {
@@ -75,13 +77,12 @@ function plotLdiBar (data,dest) { // Function to generate the LDI bar plot
   ]*/
                        };
          Plotly.newPlot(destElemId
-                       ,{data: [pltlyTraces['high'],pltlyTraces['medium'],pltlyTraces['low']]
-                        ,layout: pltlyLayout
-                        }
+                       ,[pltlyTraces['high'],pltlyTraces['medium'],pltlyTraces['low']]
+					   ,pltlyLayout
+					   ,pltModebar()
                        );
 }
 function plotCumulBar (data,dest) {  // Function to generate cumulative precip. barplot
-  console.log(data);
          var i,k;
          var idDest,elDest;
          var nMaxMonths = 36; // Max number of months for the full stack and std.dev. bars to be shown
@@ -213,9 +214,9 @@ function plotCumulBar (data,dest) {  // Function to generate cumulative precip. 
                                } 
                        };
          Plotly.plot(idDest
-                    ,{data: pltlyTraces
-                     ,layout: pltlyLayout
-                     }
+                    ,pltlyTraces
+                     ,pltlyLayout
+                     ,pltModebar()
                     );
 }
 function plotSPI (data,dest) { // Function to generate SPI barplots
@@ -247,7 +248,8 @@ function plotSPI (data,dest) { // Function to generate SPI barplots
                               ,marker: {//,color: grad(steps())
 								                       color: grad(data.spis)
                                        ,showscale: true
-								                       ,colorscale: [[0, 'rgb(255,0,0)'], [0.25, 'rgb(255,170,0)'], [0.375, 'rgb(255,255,0)'], [0.5, 'rgb(255,255,255)'], [0.625, 'rgb(233,204,249)'], [0.75, 'rgb(131,51,147)'], [1,'rgb(0,0,255)']]
+								                       //,colorscale: [[0, 'rgb(255,0,0)'], [0.25, 'rgb(255,170,0)'], [0.375, 'rgb(255,255,0)'], [0.5, 'rgb(255,255,255)'], [0.625, 'rgb(233,204,249)'], [0.75, 'rgb(131,51,147)'], [1,'rgb(0,0,255)']]
+										,colorscale: [[0, 'rgb(255,0,0)'], [0.25, 'rgb(255,170,0)'], [0.375, 'rgb(255,255,0)'], [0.5, 'rgb(255,255,255)'], [0.625, 'rgb(233,204,249)'], [0.75, 'rgb(176,81,195)'], [1,'rgb(122,0,122)']]
                                        ,cmax:3
                                        ,cmin:-3
                                        ,colorbar: {//title      : "SPI"
@@ -274,27 +276,22 @@ function plotSPI (data,dest) { // Function to generate SPI barplots
                                     }
                        ,showlegend: false
                        ,xaxis: {autorange: true
-                               //,nticks: data.months.length
-                               //,nticks: 40
-                               //,tickformat: "%m-%Y"
-                               //,tickmode: 'auto'
-							                 ,ticks: 'outside'
+							   ,ticks: 'outside'
                                ,type: 'category'
                                }
                        ,yaxis: {autorange: true
                                //,range: [-3.6, 3.6]
                                ,fixedrange: true
 							                 ,dtick: 0.5
-							                 //,dtick: 1
                                //,title: 'SPI'
                                ,title: 'SPI ' + idDest.slice(-2)
                                ,type: 'linear'
                                }
                        };
          Plotly.plot(idDest
-                    ,{data: [pltlyTraces['spi'], pltlyTraces['nan']]
-                     ,layout: pltlyLayout
-                     }
+                    ,[pltlyTraces['spi'], pltlyTraces['nan']]
+                     ,pltlyLayout
+                     ,pltModebar()
                     );
 }
 function plotPrecipitation (data,dest) { // Function to generate precipitation barplot
@@ -377,14 +374,16 @@ function plotPrecipitation (data,dest) { // Function to generate precipitation b
                                }
                        };
          Plotly.newPlot(destElemId
-                    ,{data: pltlyTraces
-                     ,layout: pltlyLayout
-                     }
+                    ,pltlyTraces
+                     ,pltlyLayout
+                    ,pltModebar()
                     );
 }
 function grad (vals) { // Function to assign color to columns in barplots
 		     var intervals = []; for (var i = 0; i < 50; ++i) intervals.push((6 / 50) * i - 3); // Range of SPI colors between 3 and -3, by 50 steps of color (calculated off line with R) 
-		     var gradient = ['#FF0000','#FF1400','#FF2900','#FF3E00','#FF5300','#FF6800','#FF7C00','#FF9100','#FFA600','#FFB200','#FFBD00','#FFC700','#FFD100','#FFDC00','#FFE600','#FFF100','#FFFB00','#FFFF14','#FFFF34','#FFFF53','#FFFF72','#FFFF91','#FFFFB0','#FFFFD0','#FFFFEF','#FDFBFE','#FAF5FD','#F8EFFD','#F5E9FC','#F2E2FB','#F0DCFA','#EDD6FA','#EAD0F9','#E4C5F4','#D8B3E8','#CBA0DB','#BF8DCF','#B27AC2','#A668B6','#9955A9','#8D429D','#803195','#702BA2','#6025AF','#501FBC','#4018CA','#3012D7','#200CE4','#1006F1','#0000FF'];
+		     //var gradient = ['#FF0000','#FF1400','#FF2900','#FF3E00','#FF5300','#FF6800','#FF7C00','#FF9100','#FFA600','#FFB200','#FFBD00','#FFC700','#FFD100','#FFDC00','#FFE600','#FFF100','#FFFB00','#FFFF14','#FFFF34','#FFFF53','#FFFF72','#FFFF91','#FFFFB0','#FFFFD0','#FFFFEF','#FDFBFE','#FAF5FD','#F8EFFD','#F5E9FC','#F2E2FB','#F0DCFA','#EDD6FA','#EAD0F9','#E4C5F4','#D8B3E8','#CBA0DB','#BF8DCF','#B27AC2','#A668B6','#9955A9','#8D429D','#803195','#702BA2','#6025AF','#501FBC','#4018CA','#3012D7','#200CE4','#1006F1','#0000FF'];
+		 var gradient = 
+			['#FF0000','#FF1400','#FF2900','#FF3E00','#FF5300','#FF6800','#FF7C00','#FF9100','#FFA600','#FFB200','#FFBD00','#FFC700','#FFD100','#FFDC00','#FFE600','#FFF100','#FFFB00','#FFFF14','#FFFF34','#FFFF53','#FFFF72','#FFFF91','#FFFFB0','#FFFFD0','#FFFFEF','#FDFBFE','#FAF5FD','#F8EFFD','#F5E9FC','#F2E2FB','#F0DCFA','#EDD6FA','#EAD0F9','#E6C6F6','#DFB7F0','#D8A8E9','#D199E2','#CA8ADC','#C37BD5','#BC6CCF','#B55DC8','#AE4FC1','#A845B8','#A13BAF','#9B31A6','#94279D','#8D1D94','#87138B','#800982','#7A007A'];
          var i,val,newdiff;
 			   var colors = [];
          for (i = 0; i < vals.length; ++i) {
@@ -432,15 +431,12 @@ function grad_zero (vs) { // Function to associate colorscale colors to deficit/
   var gradient_lt = ['#7C0607','#801314','#841D1E','#882526','#8C2D2D','#903435','#943B3C','#984243','#9D494A','#A15151','#A55858','#A95F5F','#AE6667','#B26E6E','#B67676','#BB7E7E','#BF8686','#C48F8F','#C99898','#CDA2A2','#D2ACAC','#D8B7B7','#DDC3C3','#E3D0D0','#EBE2E2','#FFFFFF'];
   // Colorscale for surplus values
   var gradient_gt = ['#FFFFFF','#E3E3EA','#D3D4E2','#C7C7DB','#BCBCD6','#B2B3D1','#A9AACC','#A0A1C7','#9899C3','#9091BF','#888ABB','#8183B7','#7A7CB4','#7375B1','#6D6EAD','#6668AB','#6062A8','#595CA5','#5356A3','#4D50A1','#464A9F','#40449E','#393D9E','#32379E','#29309F','#1F28A2'];
-  //var gradient = [...gradient_lt,  ...gradient_gt];
   var gradient = new Array(); gradient.push.apply(gradient,gradient_lt); gradient.push.apply(gradient,gradient_gt);
-  //console.log(gradient);
   var maxDark = Math.abs(m) > Math.abs(M) ? m : -M; // Get maximum deficit/surplus to calibrate color 
   var int_lt = Math.abs(maxDark) / (gradient_lt.length-1); // Calc. interval size for values below zero
   var intervals_lt = [maxDark]; for (var i = 0; i < (gradient_lt.length-1); ++i) intervals_lt.push(( int_lt * (i+1) + maxDark)); // Make interval sequence
   var int_gt = Math.abs(maxDark) / (gradient_gt.length-1); // Calc. interval size for values above equal zero
   var intervals_gt = [0]; for (var i = 0; i < (gradient_gt.length-1); ++i) intervals_gt.push(int_gt * (i+1)); // Make interval sequence
-  //var intervals = [...intervals_lt, ...intervals_gt];
   var intervals = new Array(); intervals.push.apply(intervals,intervals_lt); intervals.push.apply(intervals,intervals_gt);
   var colors = [];
   for (var ii = 0; ii < vs.length; ++ii) {
@@ -479,8 +475,6 @@ function cs_scale () { // Function to calibrate the colorbar based on the defici
   }
   return out;
 }
-
-
 
 function stdAreaLine (months, avg, std, nMonthsArea){ // Function to generate cumulative barplots for less than n months
   //var stdMinus = err_bar(avg,std);
@@ -539,72 +533,38 @@ function greyNaN (xvalues, yvalues){ // Function to make a trace for missing val
 		  };
 }
 
-function anomalyTraces (x, vals){ // Function to make the percent anomaly stacked bars from cell values
-	 var traces = [
-       {x: x
-                 ,y: vals.veryHigh
-                                 ,name: 'Above +2 (drier)'
-                                 ,opacity: 1
-                                 ,type: 'bar'
-                                 ,marker: {color: 'rgb(255,0,0)' 
-                                           //,line: {color: 'grey',width: 0.5}
-                                          }
-                                },
-       {x: x
-                 ,y: vals.high
-                                 ,name: 'Between +1 and +2'
-                                 ,opacity: 1
-                                 ,type: 'bar'
-                                 ,marker: {color: 'rgb(255,222,0)'
-                                           //,line: {color: 'grey',width: 0.5}
-                                          }
-                                },
-	   {x: x
-                 ,y: vals.middle
-                                 ,name: 'Normal'
-                                 ,opacity: 1
-                                 ,type: 'bar'
-                                 ,marker: {color: 'rgb(255,255,255)' 
-                                           ,line: {color: 'grey',width: 0.5}
-                                          }
-								 ,visible: 'legendonly'
-                                },
-                             
-	   {x: x
-                 ,y: vals.low
-                                 ,name: 'Between -1 and -2'
-                                 ,opacity: 1
-                                 ,type: 'bar'
-                                 ,marker: {color: 'rgb(105,245,0)' 
-                                           //,line: {color: 'grey',width: 0.5}
-                                          }
-								 ,visible: 'legendonly'
-                                },
-		{x: x
-                 ,y: vals.veryLow
-                                 ,name: 'Below -2 (wetter)'
-                                 ,opacity: 1
-                                 ,type: 'bar'
-                                 ,marker: {color: 'rgb(0,130,0)'
-                                           //,line: {color: 'grey',width: 0.5}
-                                          }
-								 ,visible: 'legendonly'
-                                },
-		{x: x
-                 ,y: vals.missing
-                                 ,name: 'Missing data'
-                                 ,opacity: 1
-                                 ,type: 'bar'
-                                 ,marker: {color: 'rgb(240,240,240)'
-                                           //,line: {color: 'grey',width: 0.5}
-                                }
-                                 ,visible: 'legendonly'
-                                }
-       ];
-     return(traces);
+function anomalyTraces (vals, what){ // Function to make the percent anomaly stacked bars from cell values
+		if(what === 'cont4fpTSgraph'){
+			var anote = ['Above +2 (higher photosynt.)','Between +1 and +2','Near normal','Between -1 and -2','Below -2 (lower photosynt.)'];
+			var bcol = ['rgb(0,130,0)','rgb(105,245,0)','rgb(250,250,250)','rgb(255,222,0)','rgb(255,0,0)']
+		} else {
+			var anote = ['Above +2 (drier)','Between +1 and +2','Near normal','Between -1 and -2','Below -2 (wetter)'];
+			var bcol = ['rgb(255,0,0)','rgb(255,222,0)','rgb(250,250,250)','rgb(105,245,0)','rgb(0,130,0)']
+		}
+		var traces = [];
+        for (var i = 0; i < bcol.length; ++i) {
+			//if(i === 0 | i === 1){var leg = true} else { var leg = 'legendonly'}
+            var b = {x: vals.months
+					,y: vals[Object.keys(vals)[i+1]]
+                    ,name: anote[i]
+                    ,type: 'bar'
+                    ,marker: {color: bcol[i]}
+					//,visible: leg
+                    };
+            traces.push(b);
+         }
+		 traces.push({
+			x: vals.months
+			,y: vals.H2.map(function (num, idx) {  return (100 - num - vals.H1[idx] - vals.L2[idx] - vals.L1[idx] - vals.N[idx]) })
+            ,name: 'No data'
+            ,type: 'bar'
+            ,marker: {color: 'rgb(200,200,200)'}
+			//,visible: 'legendonly'
+		 })
+		 return(traces)
 };
 
-function plotSoilFapar (data,dest) { // Function to generate the fapar/soil moisture bar plot
+function plotSoilFapar (dataSet,dest) { // Function to generate the fapar/soil moisture bar plot
 		 var i,k;
          var destElemId,elDest;
          var pltlyTraces = {};
@@ -621,40 +581,30 @@ function plotSoilFapar (data,dest) { // Function to generate the fapar/soil mois
              elDest.innerHTML = "";
              Plotly.purge(destElemId);
              i = 0;
-             for (k in data) {
+             for (k in dataSet) {
                  Plotly.deleteTraces(destElemId, i);
                  i++;
              }
          }   catch (e) {}
          pltlyLayout = {autosize: true
                        ,barmode: 'stack'
+                       /*,hoverlabel: {bgcolor: 'white'
+                                    ,font: {color: 'black'}
+                                    }*/
                        ,showlegend: true
                        ,xaxis: {type: 'date'}
-                       ,yaxis: {autorange: true
-                               ,title: '% of the selected <br> one degree cell'
+                       ,yaxis: {fixedrange: true
+                               ,title: '% of the<br>whole region'
                                ,type: 'linear'
                                }
-                       ,margin: {t: 30
-                                ,b: 70
+					   ,height: 200
+                       ,margin: {t: 20
+                                ,b: 30
                                 }
                        };
          Plotly.newPlot(destElemId
-                       ,{data: anomalyTraces (data.months, data.smVals) // Make five traces, one for anomaly class
-                        ,layout: pltlyLayout
-                        }
+                       ,anomalyTraces(dataSet, dest)
+					   ,pltlyLayout
+					   ,pltModebar()
                        );
 }
-
-function faparSoil(jsonObj){ // from json to format suitable for plot
-	var obj = jsonObj.features[0].properties.sm;
-	//console.log(obj);
-	var mm = Object.keys(obj);
-	var smv = []
-	for (var i = 0; i < mm.length; ++i) {
-		smv.push(obj[mm[i]].anomaly);
-	}
-	//console.log(smv)
-	return({months: mm,
-			smVals: smv
-	});
-};
