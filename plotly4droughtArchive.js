@@ -1,5 +1,5 @@
 var mngData2plot = function (o4plot,elDest) {
-    console.log(o4plot); // single geometry, single date
+    //console.log(o4plot); // single geometry, single date
     
     let el4eventsTimebar = document.createElement('div');
     el4eventsTimebar.id = "eventsTimebar";
@@ -9,7 +9,10 @@ var mngData2plot = function (o4plot,elDest) {
 
     let el4eventsBubbles = document.createElement('div');
     el4eventsBubbles.id = "eventsBubbles";
-    el4eventsBubbles.style.width = "100%";
+    //el4eventsBubbles.style.width = "100%";
+    el4eventsBubbles.style.display = "flex";
+    el4eventsBubbles.style.justifyContent = "center";
+    
     elDest.appendChild(el4eventsBubbles);
     plotEventsBubbles (o4plot,el4eventsBubbles);
 
@@ -20,8 +23,13 @@ var mngData2plot = function (o4plot,elDest) {
     plotEventsIndicator (o4plot,el4eventsIndicators);*/	
 };
 var pltModebar = function () { // Sets mode/action bar icons available on plotly plots
-	 return {displaylogo: false, modeBarButtonsToRemove: ['sendDataToCloud','toggleSpikelines','resetViews','zoomIn2d','zoomOut2d','resetScale2d','lasso2d']}
-}
+	 return {displaylogo: false, modeBarButtonsToRemove: ['sendDataToCloud','toggleSpikelines','resetViews','resetScale2d','lasso2d','select2d']}//'zoomIn2d','zoomOut2d',
+};
+var whichEvent = function(dt, m) { // Function to return selected/active event
+	var out = dt.peak_month.indexOf(m);
+	if (out == -1){out = dt.end_month.indexOf(m)}
+	return out;
+};
 var monthDiff = function (dt1, dt2) {
     var n,out,months;  
     var d1,d2;  
@@ -40,16 +48,21 @@ var monthDiff = function (dt1, dt2) {
 var hoverLabels = function(eventDates){
 	var txt = []; 
     for (n = 0; n < eventDates.start_month.length; ++n) {
-        txt.push('Duration: '.concat(eventDates.duration[n]
-                 ,' months<br>Start date: ',eventDates.start_month[n]
-                 ,'<br>End date: ',eventDates.end_month[n]
-                 ,'<br>Peak date: ',eventDates.peak_month[n]
-                 ,'<br>Maximum extent: ',eventDates.widest_area_perc[n],'%')
-                );
+		txt.push(
+			'Event from '+ eventDates.start_month[n] + ' to ' +
+			eventDates.end_month[n] + '<br>' +
+			'Peak month: '+ eventDates.peak_month[n] + '<br>' +
+			'Severity: '+ eventDates.severity[n] + ' | ' +
+			'Intensity: '+ eventDates.intensity[n] + '<br>' +
+			'Duration: '+ eventDates.duration[n] + ' | ' +
+			'Score: '+ eventDates.score[n] + '<br>' +
+			'Average area: '+ eventDates.average_area[n] +
+			'% (max: '+ eventDates.widest_area_perc[n]+'%)'
+		);
 	};
 	return txt;
 };
-var annotationLabels = function(eventData, pt){
+/*var annotationLabels = function(eventData, pt){
 	if(eventData.id[pt] === undefined){return ''} else {
 	var txt = 'Event from '+ eventData.start_month[pt] + ' to ' +
 	eventData.end_month[pt] + '<br>' +
@@ -61,7 +74,7 @@ var annotationLabels = function(eventData, pt){
 	'Average area: '+ eventData.average_area[pt] +
 	'% (max: '+ eventData.widest_area_perc[pt]+'%)';
 	return txt;}
-};
+};*/
 function gradBars (vals) { // Function to assign color to columns in barplots
   var i;
   var intervals = zam.scales.score.color.domain();
@@ -99,16 +112,16 @@ var colScale = function(colorObj){
 	}
 	return colorScale4plotly;
 };
-
 var plotEventsTimebar = function (o4plot, dest) {
     var i,k,n;
     var dataSet = o4plot.data;
+	var pm = whichEvent(dataSet,o4plot.info.month);
     var destElemId,elDest;
     var pltlyLayout;
 	var indicatorName = o4plot.info.indicator;
-	var pm = o4plot.data.peak_month.indexOf(o4plot.info.month);
+/*	var pm = o4plot.data.peak_month.indexOf(o4plot.info.month);
 	if(pm === -1){var pm = dataSet.end_month.indexOf(o4plot.info.month)};
-	if(pm === -1){var pm = {}};
+	if(pm === -1){var pm = {}};*/
 	var xSteps = Array.apply(null, {length: o4plot.hst['month'].length}).map(Function.call, Number);
     switch (typeof(dest)) {
       case "string":
@@ -130,17 +143,20 @@ var plotEventsTimebar = function (o4plot, dest) {
         }
     }   catch (e) {console.log(e);}
     // Make traces
-    var avg_area = [];
+ /*   var avg_area = [];
     for (n = 0; n < dataSet.average_area.length; ++n) {
         avg_area.push((dataSet.average_area[n] + 1)/30);
-    };
+    };*/
+	var lin = Array.apply(null, Array(dataSet.score.length)).map(function(){return 0.5});
+	lin[pm] = 3;
     var eventBars = {x: dataSet.duration
                     ,y: dataSet.severity
                     ,name: 'Drought events'
                     ,type: 'bar'
                     ,orientation: 'h'
 			        ,marker:{showscale: true
-                    ,colorscale: colScale(zam.scales.score.color)
+							,line:{width: lin, color:'purple'}
+							,colorscale: colScale(zam.scales.score.color)
 							,color: gradBars(dataSet.score)
 						    ,cmin:1
 							,cmax:23
@@ -151,7 +167,7 @@ var plotEventsTimebar = function (o4plot, dest) {
                                       //,x:1.08
                                       }
 						  }
-                    ,width: avg_area//0.5
+                    ,width: Math.max.apply(null,dataSet.severity) * 0.1//0.5 //avg_area
                     ,base: monthDiff(o4plot.hst.month[0], dataSet.start_month)
                     ,hoverinfo: "text"
                     ,text: hoverLabels(dataSet)	
@@ -178,8 +194,8 @@ var plotEventsTimebar = function (o4plot, dest) {
 				,line:{color: 'grey', width:0.5}
 	};	
     pltlyLayout = {autosize: true
-				  ,legend: {orientation: 'h'
-						,x:0.4,y:-0.2} 
+				  //,legend: {orientation: 'h',x:0.4,y:-0.2} 
+				  ,showlegend:false
                   ,barmode: 'stack'
                   ,xaxis: {
 					     tickvals: monthDiff(o4plot.hst.month[0], dataSet.peak_month)
@@ -219,16 +235,16 @@ var plotEventsTimebar = function (o4plot, dest) {
 						}]
 					}]*/
 				,annotations: [{ // GDO bottom signature
-					x: 1.05, y: -0.3, showarrow: false, 
+					x: 1.05, y: -0.25, showarrow: false, 
 					text: 'Global Drought Observatory (JRC)  ' + new Date().getFullYear(), 
 					font: {size: 8}, xref: 'paper', yref: 'paper'
-				}/*,{
+				},{
 					font: {size: 13, color: 'grey'},
 					showarrow: false, align: 'left',
 					x: 0.5, y: 1.25,
-					text: 'The bars are the drought events following the timeline from 1950 to 2016 (left to right). The bar thickness is average area (% of total),<br>the bar length is the duration of the event. To remove the annotations double click anywhere in the chart.', 
+					text: 'The bars are the drought events following the timeline from 1950 to 2016 (left to right).<br>The bar length is proportional to the duration of the event; the thicker purple border highlights the selected event.', 
 					xref: 'paper', yref: 'paper'		
-				},{
+				}/*,{
 					x: monthDiff(o4plot.hst.month[0], dataSet.end_month)[pm],
 					y: dataSet.severity[pm],
 					arrowhead: 1,
@@ -287,6 +303,7 @@ var plotEventsTimebar = function (o4plot, dest) {
 var plotEventsBubbles = function (o4plot, dest) {
     var i,k;
     var dataSet = o4plot.data;
+	var pm = whichEvent(dataSet,o4plot.info.month);
     var destElemId,elDest;
     var pltlyLayout;
 	var bubbleSize = []; 
@@ -309,12 +326,19 @@ var plotEventsBubbles = function (o4plot, dest) {
             Plotly.deleteTraces(destElemId, i);
             i++;
         }
-    }   catch (e) {console.log(e);};
+    } catch (e) {console.log(e);};
     // Make bubbles	
+	var sym = Array.apply(null, Array(dataSet.score.length)).map(function(){return 'circle-open'});
+	var lin = Array.apply(null, Array(dataSet.score.length)).map(function(){return 4});
+	sym[pm] = 'circle';
+	lin[pm] = 0;
+	//var sym = Array.apply(null, Array(dataSet.score.length)).map(function(){return 0});
+	//sym[whichEvent(dataSet,o4plot.info.month)] = 8;
     var bubbles = {x: dataSet.duration
               ,y: dataSet.severity
               ,mode: 'markers'
-              ,marker: {symbol:'circle-dot'
+              ,marker: {symbol:sym
+						,line:{width:lin}
                        ,size: bubbleSize
                        ,colorscale: colScale(zam.scales.score.color)
 					   ,showscale: true
@@ -329,35 +353,53 @@ var plotEventsBubbles = function (o4plot, dest) {
                }
               ,type: 'scatter'
 			  ,text: hoverLabels(dataSet)
-             };
+             };	
+//	var pm = whichEvent(dataSet,o4plot.info.month)
+/*	var selectPoint = {x: [dataSet.duration[dataSet.peak_month.indexOf(o4plot.info.month)]]
+              ,y: [dataSet.severity[dataSet.peak_month.indexOf(o4plot.info.month)]]
+              ,mode: 'markers'
+              ,marker: {symbol:'circle-open'
+                       ,size: bubbleSize[dataSet.peak_month.indexOf(o4plot.info.month)] 
+					   ,showscale: false
+					   ,color: 'purple'
+					   /*,colorscale: colScale(zam.scales.score.color)
+					   ,cmin:1
+					   ,cmax:23
+                       ,colorbar:{title: 'Score'
+                                 ,titleside: 'top'
+								 ,thickness:15
+								 ,x:1.05
+                       }
+               }
+              ,type: 'scatter'
+			  ,hoverinfo: 'none'
+    };*/
     pltlyLayout = {autosize: false
                   //,title: 'Events in selected region'
                   ,showlegend: false
-                  //,xaxis: {title:'Duration in months'}
-                  //,yaxis: {title:'Severity'}
 				  ,hovermode: 'closest'	
 				  ,hoverlabel: {
 					 bgcolor: 'white',
 					 font: {color: 'black'}
 				  },
-		  updatemenus:[{
+		updatemenus:[{
 		  y: -0.1,
 		  x: 0.6,
 		  direction: 'up',
-			borderwidth: 0,
-        buttons: [{
+		  borderwidth: 0,
+			buttons: [{
             method: 'restyle',
             args: ['x', [dataSet.duration]],
             label: 'Duration (months)'
-        }, {
+			}, {
             method: 'restyle',
             args: ['x', [dataSet.intensity]],
             label: 'Intensity'
-        }, {
+			}, {
             method: 'restyle',
             args: ['x', [dataSet.severity]],
             label: 'Severity'
-        }, {
+			}, {
             method: 'restyle',
             args: ['x', [dataSet.average_area]],
             label: 'Mean area (%)'
@@ -395,13 +437,13 @@ var plotEventsBubbles = function (o4plot, dest) {
         }]
     }],
 	annotations: [{ // GDO bottom signature
-		  x: 1.2, y: -0.2, 
+		  x: 1.15, y: -0.2, 
 		  showarrow: false, 
 		  text: 'Global Drought Observatory (JRC)  ' + new Date().getFullYear(), 
 		  font: {size: 8}, xref: 'paper', yref: 'paper'
 		},
 		{
-			text: "Circle size indicates the percentage of total area hit by the event.<br>Select the variables to show by clicking on the axes label<br>Click on a circle to view the event metrics. Double click to reset.",
+			text: "Circle size indicates the percentage of total area hit by the event.<br>The filled circle is the selected event. Zoom or pan or select the variables<br>to show by clicking on the axes label.",//<br>Click on a circle to view the event metrics. Double click to reset.",
 			font: {size: 13, color: 'grey'},
 			showarrow: false, align: 'left',
 			x: 0.5, y: 1.25,
@@ -417,7 +459,7 @@ var plotEventsBubbles = function (o4plot, dest) {
 		opacity: 1,
 		marker: {color: 'black'}
 	};
-	Plotly.restyle(destElemId, trace_update, [0,1])*/
+	Plotly.restyle(destElemId, trace_update, [0,1])
 	elDest.on('plotly_click',
 		function(data){
 			var point = data.points[0],
@@ -436,7 +478,7 @@ var plotEventsBubbles = function (o4plot, dest) {
 			divid = document.getElementById(destElemId),
 			newIndex = (divid.layout.annotations || []).length;
 		 // delete instead if clicked twice
-		 /* if(newIndex) {
+		   if(newIndex) {
 		   var foundCopy = false;
 		   divid.layout.annotations.forEach(function(ann, sameIndex) {
 			 if(ann.text === newAnnotation.text ) {
@@ -445,11 +487,11 @@ var plotEventsBubbles = function (o4plot, dest) {
 			 }
 		   });
 		   if(foundCopy) return;
-		 }*/
+		 }
 		 Plotly.relayout(destElemId, 'annotations[' + newIndex + ']', 'remove');
 		 Plotly.relayout(destElemId, 'annotations[' + newIndex + ']', newAnnotation);
 	  });
-/*	elDest.on('plotly_doubleclick', function(){ // Remove all annotations but the first two
+	elDest.on('plotly_doubleclick', function(){ // Remove all annotations but the first two
 		var newIndex = (document.getElementById(destElemId).layout.annotations || []).length;
 		for (n = 2; n < newIndex; ++n) {
 			Plotly.relayout(destElemId, 'annotations[2]', 'remove')
