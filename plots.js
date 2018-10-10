@@ -34,6 +34,7 @@ function plotLdiBar (data,dest) { // Function to generate the LDI bar plot
                               ,opacity: 1
                               ,type: 'bar'
                               ,marker: {color: 'yellow'}
+							  ,hoverinfo: 'y'
                               };
          pltlyTraces['medium'] = {x: data.refDate
                                  ,y: data.medium
@@ -41,6 +42,7 @@ function plotLdiBar (data,dest) { // Function to generate the LDI bar plot
                                  ,opacity: 1
                                  ,type: 'bar'
                                  ,marker: {color: 'orange'}
+								 ,hoverinfo: 'y'
                                  };
          pltlyTraces['high'] = {x: data.refDate
                                ,y: data.high
@@ -48,6 +50,7 @@ function plotLdiBar (data,dest) { // Function to generate the LDI bar plot
                                ,opacity: 1
                                ,type: 'bar'       
                                ,marker: {color: 'red'}
+								 ,hoverinfo: 'y'
                                };
          pltlyLayout = {autosize: true
                        ,barmode: 'stack'
@@ -536,10 +539,10 @@ function greyNaN (xvalues, yvalues){ // Function to make a trace for missing val
 function anomalyTraces (vals, what){ // Function to make the percent anomaly stacked bars from cell values
 		if(what === 'cont4fpTSgraph'){
 			var anote = ['Above +2 (higher photosynt.)','Between +1 and +2','Near normal','Between -1 and -2','Below -2 (lower photosynt.)'];
-			var bcol = ['rgb(0,130,0)','rgb(105,245,0)','rgb(250,250,250)','rgb(255,222,0)','rgb(255,0,0)']
+			var bcol = ['rgb(0,130,0)','rgb(105,245,0)','rgb(239,237,245)','rgb(255,222,0)','rgb(255,0,0)']
 		} else {
 			var anote = ['Above +2 (drier)','Between +1 and +2','Near normal','Between -1 and -2','Below -2 (wetter)'];
-			var bcol = ['rgb(255,0,0)','rgb(255,222,0)','rgb(250,250,250)','rgb(105,245,0)','rgb(0,130,0)']
+			var bcol = ['rgb(255,0,0)','rgb(255,222,0)','rgb(239,237,245)','rgb(105,245,0)','rgb(0,130,0)']
 		}
 		var traces = [];
         for (var i = 0; i < bcol.length; ++i) {
@@ -550,6 +553,8 @@ function anomalyTraces (vals, what){ // Function to make the percent anomaly sta
                     ,type: 'bar'
                     ,marker: {color: bcol[i]}
 					//,visible: leg
+					//,text: anote
+					,hoverinfo: 'x+y'
                     };
             traces.push(b);
          }
@@ -558,7 +563,8 @@ function anomalyTraces (vals, what){ // Function to make the percent anomaly sta
 			,y: vals.H2.map(function (num, idx) {  return (100 - num - vals.H1[idx] - vals.L2[idx] - vals.L1[idx] - vals.N[idx]) })
             ,name: 'No data'
             ,type: 'bar'
-            ,marker: {color: 'rgb(200,200,200)'}
+            ,marker: {color: 'rgb(190,190,190)'}
+			,hoverinfo: 'x+y'
 			//,visible: 'legendonly'
 		 })
 		 return(traces)
@@ -588,8 +594,9 @@ function plotSoilFapar (dataSet,dest) { // Function to generate the fapar/soil m
          }   catch (e) {}
          pltlyLayout = {autosize: true
                        ,barmode: 'stack'
-                       /*,hoverlabel: {bgcolor: 'white'
-                                    ,font: {color: 'black'}
+                       /*,hoverlabel: {bgcolor: 'black'
+									,font: {color: 'white'}
+									,namelength: -1
                                     }*/
                        ,showlegend: true
                        ,xaxis: {type: 'date'}
